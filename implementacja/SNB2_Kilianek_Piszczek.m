@@ -84,94 +84,94 @@ M(:,3) = (M(:,3)-min(M(:,3)))/(max(M(:,3)-min(M(:,3)))) * (1-0) + 0;
 M(:,4) = (M(:,4)-min(M(:,4)))/(max(M(:,4)-min(M(:,4)))) * (1-0) + 0;
 M(:,5) = (M(:,5)-min(M(:,5)))/(max(M(:,5)-min(M(:,5)))) * (1-0) + 0;
 
-%% ========= Podział danych na zbiór uczący i testowy =========
+%% ========= Podział danych na zbiór uczący i zbior testowy =========
 
-Test = [Malignant(1:uint64(size(Malignant,1)/2),:) ; Benign(1:uint64(size(Benign,1)/2),:)]; % dane testowe
-Train = [Malignant(uint64(size(Malignant,1)/2)+1:size(Malignant,1),:) ; Benign(uint64(size(Benign,1)/2)+1:size(Benign,1),:)]; % dane uczące
+zbiorTestowy = [Malignant(1:uint64(size(Malignant,1)/2),:) ; Benign(1:uint64(size(Benign,1)/2),:)]; % dane zbiorTestowyowe
+zbiorTreningowy = [Malignant(uint64(size(Malignant,1)/2)+1:size(Malignant,1),:) ; Benign(uint64(size(Benign,1)/2)+1:size(Benign,1),:)]; % dane uczące
 
 %% ========= Implementacja sieci SOM =========
 
-somRow = 100;
-somCol = 100;
+liczbaWierszySiatki = 100;
+liczbaKolumnSiatki = 100;
 
-% Number of iteration for convergence
-Iteration = 100;
+% Liczba iteracji dla zbieżności
+iteracja = 100;
 
-%%=========== Parameter Setting For SOM ===================================
-% Initial size of topological neighbourhood of the winning neuron
-width_Initial = 5;
+%%=========== Ustawienie parametrów dla SOM ===================================
+% Początkowy rozmiar sąsiedztwa topologicznego zwycięskiego neuronu
+poczatkowyRozmiarSasiedztwa = 5;
 
-% Time constant for initial topological neighbourhood size
-t_width = Iteration/log(width_Initial);
+% Stała czasowa początkowego rozmiaru sąsiedztwa topologicznego
+stalaCzasowa = iteracja/log(poczatkowyRozmiarSasiedztwa);
 
-% Initial time-varying learning rate
-learningRate_Initial = 1;
+% Początkowa szybkość uczenia się zmienna w czasie
+poczatkowyWspolczynnikUczenia = 1;
 
-% Time constant for the time-varying learning rate
-t_learningRate = Iteration;
+% Stała czasowa dla zmiennej w czasie szybkości uczenia się
+wspolczynnikNauki = iteracja;
 
 
-somMap = inicjalizacjaWag(somRow,somCol,size(Train,2));
+mapaSOM = inicjalizacjaWag(liczbaWierszySiatki,liczbaKolumnSiatki,size(zbiorTreningowy,2));
 
-train_data = Train;
-[dataRow, dataCol] = size(train_data);
+zbiorTreningowyDane = zbiorTreningowy;
 
-for t = 1:Iteration
-    width = width_Initial*exp(-t/t_width);
-    width_Variance = width^2;
-    learningRate = learningRate_Initial*exp(-t/t_learningRate);
-    if learningRate <0.025
-            learningRate = 0.1;
+for t = 1:iteracja
+    szerokosc = poczatkowyRozmiarSasiedztwa*exp(-t/stalaCzasowa);
+    wariancjaSzerokosci = szerokosc^2;
+    wskaznikNauki = poczatkowyWspolczynnikUczenia*exp(-t/wspolczynnikNauki);
+    if wskaznikNauki <0.025
+            wskaznikNauki = 0.1;
     end
 
-    [euclideanDist, index] = euklidesowydystans(Train, somMap, somRow, ...
-                                            somCol,size(Train,1), size(Train,2));
+    [dystansEuklidesowy, indeks] = euklidesowyDystans(zbiorTreningowy, mapaSOM, liczbaWierszySiatki, ...
+                                            liczbaKolumnSiatki,size(zbiorTreningowy,1), size(zbiorTreningowy,2));
+    [~,indeks2] = min(dystansEuklidesowy(:));
+    [wygranyRzad,wygranaKolumna] = ind2sub(size(dystansEuklidesowy),indeks2);
 
-    [minM,ind] = min(euclideanDist(:));
-    [win_Row,win_Col] = ind2sub(size(euclideanDist),ind);
-
-    neighborhood = obliczsasiada( somRow, somCol, win_Row, ...
-                                            win_Col, width_Variance);
-    somMap = aktualizacjawag( train_data, somMap, somRow, somCol, ...
-                                dataCol, index, learningRate, neighborhood);
-     % Weight vector of neuron
-    dot = zeros(somRow*somCol, dataCol);
-    % Matrix for SOM plot grid
-    matrix = zeros(somRow*somCol,1);
-    % Matrix for SOM plot grid for deletion
-    matrix_old = zeros(somRow*somCol,1);
-    ind = 1;  
+    neighborhood = obliczNajblizszegoSasiada( liczbaWierszySiatki, liczbaKolumnSiatki, wygranyRzad, ...
+                                            wygranaKolumna, wariancjaSzerokosci);
+    mapaSOM = aktualizacjaWag( zbiorTreningowyDane, mapaSOM, liczbaWierszySiatki, liczbaKolumnSiatki, ...
+                                size(zbiorTreningowy,2), indeks, wskaznikNauki, neighborhood);
+    
+    
+    % Wektor wagowy neuronu
+    dot = zeros(liczbaWierszySiatki*liczbaKolumnSiatki, size(zbiorTreningowy,2));
+    % Macierz SOM do rysowania
+    macierz = zeros(liczbaWierszySiatki*liczbaKolumnSiatki,1);
+    % Macierz do usunięcia z rysunku
+    macierzZapis = zeros(liczbaWierszySiatki*liczbaKolumnSiatki,1);
+    indeks2 = 1;  
     hold on;
     f1 = figure(1);
-    set(f1,'name',strcat('Iteration #',num2str(t)),'numbertitle','off');
+    set(f1,'name',strcat('iteracja #',num2str(t)),'numbertitle','off');
 
-    % Retrieve the weight vector of neuron
-    for r = 1:somRow
-        for c = 1:somCol      
-            dot(ind,:)=reshape(somMap(r,c,:),1,dataCol);
-            ind = ind + 1;
+    % Pobierz wektor wagowy neuronu
+    for r = 1:liczbaWierszySiatki
+        for c = 1:liczbaKolumnSiatki      
+            dot(indeks2,:)=reshape(mapaSOM(r,c,:),1,size(zbiorTreningowy,2));
+            indeks2 = indeks2 + 1;
         end
     end
 
-    % Plot SOM
-    for r = 1:somRow
-        Row_1 = 1+somRow*(r-1);
-        Row_2 = r*somRow;
-        Col_1 = somRow*somCol;
+    % Rysuj siatke SOM
+    for r = 1:liczbaWierszySiatki
+        rzad1 = 1+liczbaWierszySiatki*(r-1);
+        rzad2 = r*liczbaWierszySiatki;
+        wiersz1 = liczbaWierszySiatki*liczbaKolumnSiatki;
 
-        matrix(2*r-1,1) = plot(dot(Row_1:Row_2,1),dot(Row_1:Row_2,2),'--ro','LineWidth',2,'MarkerEdgeColor','g','MarkerFaceColor','g','MarkerSize',4);
-        matrix(2*r,1) = plot(dot(r:somCol:Col_1,1),dot(r:somCol:Col_1,2),'--ro','LineWidth',2,'MarkerEdgeColor','g','MarkerFaceColor','g','MarkerSize',4);
+        macierz(2*r-1,1) = plot(dot(rzad1:rzad2,1),dot(rzad1:rzad2,2),'--ro','LineWidth',2,'MarkerEdgeColor','g','MarkerFaceColor','g','MarkerSize',4);
+        macierz(2*r,1) = plot(dot(r:liczbaKolumnSiatki:wiersz1,1),dot(r:liczbaKolumnSiatki:wiersz1,2),'--ro','LineWidth',2,'MarkerEdgeColor','g','MarkerFaceColor','g','MarkerSize',4);
 
-        matrix_old(2*r-1,1) = matrix(2*r-1,1);
-        matrix_old(2*r,1) = matrix(2*r,1);
+        macierzZapis(2*r-1,1) = macierz(2*r-1,1);
+        macierzZapis(2*r,1) = macierz(2*r,1);
 
     end
 
-    % Delete the SOM plot from previous iteration
-    if t~=Iteration  
-        for r = 1:somRow
-            delete(matrix_old(2*r-1,1));
-            delete(matrix_old(2*r,1));
+    % Usuń wykres SOM z poprzedniej iteracji
+    if t~=iteracja  
+        for r = 1:liczbaWierszySiatki
+            delete(macierzZapis(2*r-1,1));
+            delete(macierzZapis(2*r,1));
             drawnow;
         end
     end
