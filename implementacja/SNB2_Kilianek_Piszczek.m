@@ -91,15 +91,15 @@ Train = [Malignant(uint64(size(Malignant,1)/2)+1:size(Malignant,1),:) ; Benign(u
 
 %% ========= Implementacja sieci SOM =========
 
-somRow = 20;
-somCol = 20;
+somRow = 100;
+somCol = 100;
 
 % Number of iteration for convergence
-Iteration = 10000;
+Iteration = 100;
 
 %%=========== Parameter Setting For SOM ===================================
 % Initial size of topological neighbourhood of the winning neuron
-width_Initial = 15;
+width_Initial = 5;
 
 % Time constant for initial topological neighbourhood size
 t_width = Iteration/log(width_Initial);
@@ -113,7 +113,6 @@ t_learningRate = Iteration;
 
 somMap = inicjalizacjaWag(somRow,somCol,size(Train,2));
 
-learningRate_Initial = 1;
 train_data = Train;
 [dataRow, dataCol] = size(train_data);
 
