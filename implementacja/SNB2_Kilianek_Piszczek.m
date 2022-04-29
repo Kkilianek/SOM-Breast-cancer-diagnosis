@@ -71,7 +71,7 @@ Benign = M(benign,:); % zbiór cech dla przypadku nowotworu łagodnego
 % Przed podaniem danych wejściowych do sieci neuronowej musimy jeszcze
 % przeprowadzić operację normalizacji, tak aby każda z cech miała
 % identyczny wpływ na proces uczenia się sieci. Jeżeli nie dokonalibyśmy
-% takich operacji, to jedna z cech (w naszym przypadku dotycząca wieku),
+% takich operacji, to jedna z cech (w naszym przypadku wektorWagycząca wieku),
 % miałaby największy wpływ na rozkład danych, przez to, że jej rozpiętość
 % jest największa wynosząca od 18 do 96 lat. Dlatego też poniżej
 % dokonaliśmy przekształceń tak aby każda cecha przyjmowała wartości w
@@ -135,7 +135,7 @@ for t = 1:iteracja
     
     
     % Wektor wagowy neuronu
-    dot = zeros(liczbaWierszySiatki*liczbaKolumnSiatki, size(zbiorTreningowy,2));
+    wektorWag = zeros(liczbaWierszySiatki*liczbaKolumnSiatki, size(zbiorTreningowy,2));
     % Macierz SOM do rysowania
     macierz = zeros(liczbaWierszySiatki*liczbaKolumnSiatki,1);
     % Macierz do usunięcia z rysunku
@@ -148,7 +148,7 @@ for t = 1:iteracja
     % Pobierz wektor wagowy neuronu
     for r = 1:liczbaWierszySiatki
         for c = 1:liczbaKolumnSiatki      
-            dot(indeks2,:)=reshape(mapaSOM(r,c,:),1,size(zbiorTreningowy,2));
+            wektorWag(indeks2,:)=reshape(mapaSOM(r,c,:),1,size(zbiorTreningowy,2));
             indeks2 = indeks2 + 1;
         end
     end
@@ -159,8 +159,8 @@ for t = 1:iteracja
         rzad2 = r*liczbaWierszySiatki;
         wiersz1 = liczbaWierszySiatki*liczbaKolumnSiatki;
 
-        macierz(2*r-1,1) = plot(dot(rzad1:rzad2,1),dot(rzad1:rzad2,2),'--ro','LineWidth',2,'MarkerEdgeColor','g','MarkerFaceColor','g','MarkerSize',4);
-        macierz(2*r,1) = plot(dot(r:liczbaKolumnSiatki:wiersz1,1),dot(r:liczbaKolumnSiatki:wiersz1,2),'--ro','LineWidth',2,'MarkerEdgeColor','g','MarkerFaceColor','g','MarkerSize',4);
+        macierz(2*r-1,1) = plot(wektorWag(rzad1:rzad2,1),wektorWag(rzad1:rzad2,2),'--ro','LineWidth',2,'MarkerEdgeColor','g','MarkerFaceColor','g','MarkerSize',4);
+        macierz(2*r,1) = plot(wektorWag(r:liczbaKolumnSiatki:wiersz1,1),wektorWag(r:liczbaKolumnSiatki:wiersz1,2),'--ro','LineWidth',2,'MarkerEdgeColor','g','MarkerFaceColor','g','MarkerSize',4);
 
         macierzZapis(2*r-1,1) = macierz(2*r-1,1);
         macierzZapis(2*r,1) = macierz(2*r,1);
