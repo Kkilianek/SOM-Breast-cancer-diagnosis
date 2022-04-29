@@ -1,0 +1,2 @@
+# TODO
+optymalizacja zaimplementowanej sieci
