@@ -91,8 +91,8 @@ zbiorTreningowy = [Malignant(uint64(size(Malignant,1)/2)+1:size(Malignant,1),:) 
 
 %% ========= Implementacja sieci SOM =========
 
-liczbaWierszySiatki = 100;
-liczbaKolumnSiatki = 100;
+liczbaWierszySiatki = 50;
+liczbaKolumnSiatki = 50;
 
 % Liczba iteracji dla zbieżności
 iteracja = 100;
@@ -102,6 +102,7 @@ iteracja = 100;
 poczatkowyRozmiarSasiedztwa = 5;
 
 % Stała czasowa początkowego rozmiaru sąsiedztwa topologicznego
+%skąd jest wzór na to - i dlaczego akurat logarytm naturalny?
 stalaCzasowa = iteracja/log(poczatkowyRozmiarSasiedztwa);
 
 % Początkowa szybkość uczenia się zmienna w czasie
@@ -116,11 +117,11 @@ mapaSOM = inicjalizacjaWag(liczbaWierszySiatki,liczbaKolumnSiatki,size(zbiorTren
 zbiorTreningowyDane = zbiorTreningowy;
 
 for t = 1:iteracja
-    szerokosc = poczatkowyRozmiarSasiedztwa*exp(-t/stalaCzasowa);
+    szerokosc = poczatkowyRozmiarSasiedztwa*exp(-t/stalaCzasowa); %tu też skąd ten wzorek wziąłeś? :D
     wariancjaSzerokosci = szerokosc^2;
-    wskaznikNauki = poczatkowyWspolczynnikUczenia*exp(-t/wspolczynnikNauki);
+    wskaznikNauki = poczatkowyWspolczynnikUczenia*exp(-t/wspolczynnikNauki); %again
     if wskaznikNauki <0.025
-            wskaznikNauki = 0.1;
+            wskaznikNauki = 0.1; %czemu tu już taki spadek?
     end
 
     [dystansEuklidesowy, indeks] = euklidesowyDystans(zbiorTreningowy, mapaSOM, liczbaWierszySiatki, ...
