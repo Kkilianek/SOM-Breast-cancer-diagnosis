@@ -22,7 +22,6 @@ end
 
 size1 = size(M,1); % zapisanie ilości wektorów cech przed preprocessingiem
 M = table2array(M); % zamiana na dane numeryczne
-M(any(ismissing(M),2),:) = []; % <- może jednak będzie trzeba usunac te dane :?
 
 % Proponowany sposób kodowania danych numerycznych -> single
 % (single-precision number), ponieważ mamy do czynienia z liczbami 
@@ -85,6 +84,10 @@ benign = M(:,6) == 0;
 Malignant = M(malignant,:); % zbiór cech dla przypadku nowotworu złośliwego
 Benign = M(benign,:); % zbiór cech dla przypadku nowotworu łagodnego
 
+Malignant = Malignant(~isnan(Malignant));
+Benign = Benign';
+Benign = Benign(~isnan(Benign));
+
 %% ========= Podział danych na zbiór uczący i zbior testowy =========
 
 zbiorTestowy = [Malignant(1:uint64(size(Malignant,1)/2),:) ; Benign(1:uint64(size(Benign,1)/2),:)]; % dane zbiorTestowyowe
@@ -98,7 +101,7 @@ liczbaKolumnSiatki = 5;
 iteracja = 100; % Odgórny limit iteracji potrzebny do zbieżności
 
 %% =========== Ustawienie parametrów dla SOM =========
-% Początkowy topologiczny rozmiar sąsiedztwa zwycięskiego neuronu
+% Początkowy rozmiar sąsiedztwa topologicznego zwycięskiego neuronu
 poczatkowyRozmiarSasiedztwa = 1;
 
 % Stała czasowa początkowego rozmiaru sąsiedztwa topologicznego
@@ -194,8 +197,8 @@ end
 %% ========= Kalibracja =========
 
 % średnie wektory zmian zlosliwych i lagodnych
-sr_zlosliwy = sum(Malignant(1:uint64(size(Malignant,1)/2),1:5),'omitnan')/size(Malignant,1)/2;
-sr_lagodny = sum(Benign(1:uint64(size(Benign,1)/2),1:5),'omitnan')/size(Benign,1)/2;
+sr_lagodny = sum(Malignant(1:uint64(size(Malignant,1)/2),1:5),'omitnan')/size(Malignant,1)/2;
+sr_zlosliwy = sum(Benign(1:uint64(size(Benign,1)/2),1:5),'omitnan')/size(Benign,1)/2;
 f=1;
 p=1;
 for j=1:liczbaWierszySiatki
