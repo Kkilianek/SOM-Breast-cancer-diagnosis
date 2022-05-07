@@ -141,9 +141,9 @@ for t = 1:iteracja
     macierz = zeros(liczbaWierszySiatki*liczbaKolumnSiatki,1);
     % zmienna pomocnicza
     pomocnicza = 1;  
-    hold on;
     figure(1);
     title('Wykres wag')
+    hold on;
 
     % Pobierz wektor wagowy neuronu
     for r = 1:liczbaWierszySiatki
@@ -154,8 +154,10 @@ for t = 1:iteracja
     end
     
     figure(2)
-    title('Wykres błedu od liczby iteracji')
+    title('Proces uczenia sieci (przebieg błędu w zależności od liczby iteracji)')
     hold on;
+    figure(3)
+    title('Mapa SOM')
 
     % Rysuj siatke SOM
     for r = 1:liczbaWierszySiatki
@@ -163,7 +165,8 @@ for t = 1:iteracja
         rzad2 = r*liczbaWierszySiatki;
         wiersz1 = liczbaWierszySiatki*liczbaKolumnSiatki;
         figure(2)
-        plot(t,4) % <- tutaj trzeba ogarnąć jak rysować wykres funkcji błedu od iteracji
+        blad = 1;
+        scatter(t,blad) % <- tutaj trzeba ogarnąć jak rysować wykres funkcji błedu od iteracji
         % prawdopdoobnie trzeba wpasc na pomysl w jaki sposob robimy
         % klasyfikacje zlosliwa/lagodna. W 1 czesci napisalismy cos
         % takiego: decyzja związana z ustaleniem grupy danego wektora cech jest realizowana na podstawie
@@ -185,7 +188,6 @@ for t = 1:iteracja
     figure(3)
     title('Mapa SOM')
     [X, Y] = meshgrid(mapaSOM);
-    clf;
     plot(X, Y, '.k')
     axis square
     hold off
