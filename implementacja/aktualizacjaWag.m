@@ -1,18 +1,17 @@
-function WeightVectorUpdated = aktualizacjaWag(  train_data, somMap, somRow, ... 
-                        somCol, dataCol, index, learningRate, neighborhood)
-% This function update the weight of all the neurons depending on the 
-% distance between winning neuron and other neuron
+function AktualizacjWagWektorow = aktualizacjaWag(zbiorTreningowy, somMap, liczbaWierszySiatki, ... 
+                        liczbaKolumnSiatki, wymiarDanych, indeks, wspolczynnikUczenia, otoczenie)
+% Opis funkcji...
 
-    WeightVectorUpdated = zeros(somRow, somCol, dataCol);
+    AktualizacjWagWektorow = zeros(liczbaWierszySiatki, liczbaKolumnSiatki, wymiarDanych);
     
-    for r = 1: somRow
-       for c = 1:somCol
+    for r = 1: liczbaWierszySiatki
+       for c = 1:liczbaKolumnSiatki
            
-           % Reshape the dimension of the current weight vector
-           currentWeightVector = reshape(somMap(r,c,:),1,dataCol);
+           % Przekształć wymiar aktualnego wektora wagi
+           aktualnyWektorWag = reshape(somMap(r,c,:),1,wymiarDanych);
            
-           % Update the weight vector for each neuron
-           WeightVectorUpdated(r,c,:) = currentWeightVector + learningRate*neighborhood(r,c)*(train_data(index,:)-currentWeightVector);
+           % Zaktualizuj wektor wag dla każdego neuronu
+           AktualizacjWagWektorow(r,c,:) = aktualnyWektorWag + wspolczynnikUczenia*otoczenie(r,c)*(zbiorTreningowy(indeks,:)-aktualnyWektorWag);
             
        end
     end

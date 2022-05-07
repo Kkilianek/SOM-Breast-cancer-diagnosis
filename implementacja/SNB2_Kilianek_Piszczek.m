@@ -6,7 +6,6 @@
 
 clear;
 clc;
-clf;
 close all;
 
 %% ========= Wczytanie danych =========
@@ -94,53 +93,49 @@ zbiorTreningowy = [Malignant(uint64(size(Malignant,1)/2)+1:size(Malignant,1),:) 
 liczbaWierszySiatki = 50;
 liczbaKolumnSiatki = 50;
 
-% Liczba iteracji dla zbieżności
-iteracja = 100;
+iteracja = 100; % Odgórny limit iteracji potrzebny do zbieżności
 
-%%=========== Ustawienie parametrów dla SOM ===================================
+%% =========== Ustawienie parametrów dla SOM =========
 % Początkowy rozmiar sąsiedztwa topologicznego zwycięskiego neuronu
 poczatkowyRozmiarSasiedztwa = 5;
 
 % Stała czasowa początkowego rozmiaru sąsiedztwa topologicznego
-%skąd jest wzór na to - i dlaczego akurat logarytm naturalny?
+% skąd jest wzór na to - i dlaczego akurat logarytm naturalny? <- ja ten
+% kod tak jak mówiłem skopiowałem z neta (nie mam pojecia skad sa te wzory)
 stalaCzasowa = iteracja/log(poczatkowyRozmiarSasiedztwa);
 
 % Początkowa szybkość uczenia się zmienna w czasie
 poczatkowyWspolczynnikUczenia = 1;
 
-% Stała czasowa dla zmiennej w czasie szybkości uczenia się
-wspolczynnikNauki = iteracja;
-
+wspolczynnikNauki = iteracja; % Stała czasowa dla zmiennej w czasie szybkości uczenia się
 
 mapaSOM = inicjalizacjaWag(liczbaWierszySiatki,liczbaKolumnSiatki,size(zbiorTreningowy,2));
 
-zbiorTreningowyDane = zbiorTreningowy;
+%% =========== Proces uczenia sieci SOM =========
 
 for t = 1:iteracja
-    szerokosc = poczatkowyRozmiarSasiedztwa*exp(-t/stalaCzasowa); %tu też skąd ten wzorek wziąłeś? :D
+    szerokosc = poczatkowyRozmiarSasiedztwa*exp(-t/stalaCzasowa); %tu też skąd ten wzorek wziąłeś? :D <- same
     wariancjaSzerokosci = szerokosc^2;
-    wskaznikNauki = poczatkowyWspolczynnikUczenia*exp(-t/wspolczynnikNauki); %again
+    wskaznikNauki = poczatkowyWspolczynnikUczenia*exp(-t/wspolczynnikNauki); %again <- same
     if wskaznikNauki <0.025
-            wskaznikNauki = 0.1; %czemu tu już taki spadek?
+            wskaznikNauki = 0.1; %czemu tu już taki spadek? <- prawdopodobnie po to by nie byl ten wspolczynnik ultra maly
     end
 
-    [dystansEuklidesowy, indeks] = euklidesowyDystans(zbiorTreningowy, mapaSOM, liczbaWierszySiatki, ...
+    [dystansEntropy, indeks] = entropyDistance(zbiorTreningowy, mapaSOM, liczbaWierszySiatki, ...
                                             liczbaKolumnSiatki,size(zbiorTreningowy,1), size(zbiorTreningowy,2));
-    [~,indeks2] = min(dystansEuklidesowy(:));
-    [wygranyRzad,wygranaKolumna] = ind2sub(size(dystansEuklidesowy),indeks2);
+    [~,indeks2] = min(dystansEntropy(:));
+    [wygranyRzad,wygranaKolumna] = ind2sub(size(dystansEntropy),indeks2);
 
-    neighborhood = obliczNajblizszegoSasiada( liczbaWierszySiatki, liczbaKolumnSiatki, wygranyRzad, ...
+    neighborhood = obliczNajblizszegoSasiada(liczbaWierszySiatki, liczbaKolumnSiatki, wygranyRzad, ...
                                             wygranaKolumna, wariancjaSzerokosci);
-    mapaSOM = aktualizacjaWag( zbiorTreningowyDane, mapaSOM, liczbaWierszySiatki, liczbaKolumnSiatki, ...
+    mapaSOM = aktualizacjaWag(zbiorTreningowy, mapaSOM, liczbaWierszySiatki, liczbaKolumnSiatki, ...
                                 size(zbiorTreningowy,2), indeks, wskaznikNauki, neighborhood);
-    
     
     % Wektor wagowy neuronu
     wektorWag = zeros(liczbaWierszySiatki*liczbaKolumnSiatki, size(zbiorTreningowy,2));
     % Macierz SOM do rysowania
     macierz = zeros(liczbaWierszySiatki*liczbaKolumnSiatki,1);
-    % Macierz do usunięcia z rysunku
-    macierzZapis = zeros(liczbaWierszySiatki*liczbaKolumnSiatki,1);
+    % zmienna pomocnicza
     indeks2 = 1;  
     hold on;
     f1 = figure(1);
@@ -153,29 +148,24 @@ for t = 1:iteracja
             indeks2 = indeks2 + 1;
         end
     end
+    
+    figure(2)
+    hold on;
 
     % Rysuj siatke SOM
     for r = 1:liczbaWierszySiatki
         rzad1 = 1+liczbaWierszySiatki*(r-1);
         rzad2 = r*liczbaWierszySiatki;
         wiersz1 = liczbaWierszySiatki*liczbaKolumnSiatki;
-
+        figure(2)
+        plot(t,4)
+        figure(1)
         macierz(2*r-1,1) = plot(wektorWag(rzad1:rzad2,1),wektorWag(rzad1:rzad2,2),'--ro','LineWidth',2,'MarkerEdgeColor','g','MarkerFaceColor','g','MarkerSize',4);
         macierz(2*r,1) = plot(wektorWag(r:liczbaKolumnSiatki:wiersz1,1),wektorWag(r:liczbaKolumnSiatki:wiersz1,2),'--ro','LineWidth',2,'MarkerEdgeColor','g','MarkerFaceColor','g','MarkerSize',4);
-
-        macierzZapis(2*r-1,1) = macierz(2*r-1,1);
-        macierzZapis(2*r,1) = macierz(2*r,1);
-
     end
 
-    % Usuń wykres SOM z poprzedniej iteracji
-    if t~=iteracja  
-        for r = 1:liczbaWierszySiatki
-            delete(macierzZapis(2*r-1,1));
-            delete(macierzZapis(2*r,1));
-            drawnow;
-        end
-    end
+    figure(1)
+    hold off
+    figure(2)
+    hold off
 end
-
-

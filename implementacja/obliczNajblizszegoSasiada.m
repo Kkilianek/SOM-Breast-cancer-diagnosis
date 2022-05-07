@@ -1,21 +1,21 @@
-function neighbourhood_Function = obliczNajblizszegoSasiada( somRow, ... 
-                                  somCol, win_Row, win_Col, width_Variance)
-% This function compute the lateral distance between neurons i and the
-% winning neurons 
+function otoczenie = obliczNajblizszegoSasiada(liczbaWierszySiatki,liczbaKolumnSiatki, ...
+    wygranyRzad, wygranaKolumna, wariancjaSzerokosci)
+% Ta funkcja oblicza odległość poprzeczną między neuronami i oraz
+% wygrywających neuronów
 
-    % Initialize matrix for storing the Euclidean distance between each neuron
-    % and winning neuron for computation of neighbourhood function
-    neighbourhood_Function = zeros(somRow, somCol);
+    % Zainicjuj macierz do przechowywania odległości euklidesowej między każdym neuronem
+    % i wygrywający neuron do obliczenia funkcji sąsiedztwa
+    otoczenie = zeros(liczbaWierszySiatki, liczbaKolumnSiatki);
     
-    for r = 1:somRow
-       for c = 1:somCol
-           if (r == win_Row) && (c == win_Col)
-               % neighborhood function for winning neuron
-               neighbourhood_Function(r,c) = 1;
+    for r = 1:liczbaWierszySiatki
+       for c = 1:liczbaKolumnSiatki
+           if (r == wygranyRzad) && (c == wygranaKolumna)
+               % funkcja sąsiedztwa dla wygrywającego neuron
+               otoczenie(r,c) = 1;
            else
-               % % neighborhood function for other neurons
-               distance = (win_Row - r)^2+(win_Col - c)^2;
-               neighbourhood_Function(r,c) = exp(-distance/(2*width_Variance));
+               % funkcja sąsiedztwa dla innych neuronów
+               odleglosc = (wygranyRzad - r)^2+(wygranaKolumna - c)^2;
+               otoczenie(r,c) = exp(-odleglosc/(2*wariancjaSzerokosci));
            end    
        end
     end
