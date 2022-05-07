@@ -90,14 +90,14 @@ zbiorTreningowy = [Malignant(uint64(size(Malignant,1)/2)+1:size(Malignant,1),:) 
 
 %% ========= Implementacja sieci SOM =========
 
-liczbaWierszySiatki = 5;
-liczbaKolumnSiatki = 5;
+liczbaWierszySiatki = 10;
+liczbaKolumnSiatki = 10;
 
 iteracja = 15; % Odgórny limit iteracji potrzebny do zbieżności
 
 %% =========== Ustawienie parametrów dla SOM =========
 % Początkowy rozmiar sąsiedztwa topologicznego zwycięskiego neuronu
-poczatkowyRozmiarSasiedztwa = 1;
+poczatkowyRozmiarSasiedztwa = 3;
 
 % Stała czasowa początkowego rozmiaru sąsiedztwa topologicznego
 % skąd jest wzór na to - i dlaczego akurat logarytm naturalny? <- ja ten
@@ -154,7 +154,6 @@ for t = 1:iteracja
     end
     
     figure(2)
-    title('Wykres błedu od liczby iteracji')
     hold on;
 
     % Rysuj siatke SOM
@@ -179,14 +178,10 @@ for t = 1:iteracja
     end
 
     figure(1)
+    axis([min() max() min() max()])
     hold off
     figure(2)
     hold off
     figure(3)
     title('Mapa SOM')
-    [X, Y] = meshgrid(mapaSOM);
-    clf;
-    plot(X, Y, '.k')
-    axis square
-    hold off
 end

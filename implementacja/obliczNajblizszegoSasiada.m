@@ -13,7 +13,9 @@ function otoczenie = obliczNajblizszegoSasiada(liczbaWierszySiatki,liczbaKolumnS
                % funkcja sąsiedztwa dla wygrywającego neuron
                otoczenie(r,c) = 1;
            else
-               % funkcja sąsiedztwa dla innych neuronów
+               % funkcja sąsiedztwa dla innych neuronów (Spróbowałem
+               % zmienić na wzor z prezentacji (zapalanie neuronow w
+               % funkcji Gaussa)
                odleglosc = (wygranyRzad - r)^2+(wygranaKolumna - c)^2;
                otoczenie(r,c) = exp(-odleglosc/(2*wariancjaSzerokosci^2));
            end    
