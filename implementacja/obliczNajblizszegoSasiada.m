@@ -15,7 +15,7 @@ function otoczenie = obliczNajblizszegoSasiada(liczbaWierszySiatki,liczbaKolumnS
            else
                % funkcja sąsiedztwa dla innych neuronów
                odleglosc = (wygranyRzad - r)^2+(wygranaKolumna - c)^2;
-               otoczenie(r,c) = exp(-odleglosc/(2*wariancjaSzerokosci));
+               otoczenie(r,c) = exp(-odleglosc/(2*wariancjaSzerokosci^2));
            end    
        end
     end

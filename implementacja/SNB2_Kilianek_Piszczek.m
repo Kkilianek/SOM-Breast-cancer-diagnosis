@@ -90,14 +90,14 @@ zbiorTreningowy = [Malignant(uint64(size(Malignant,1)/2)+1:size(Malignant,1),:) 
 
 %% ========= Implementacja sieci SOM =========
 
-liczbaWierszySiatki = 50;
-liczbaKolumnSiatki = 50;
+liczbaWierszySiatki = 6;
+liczbaKolumnSiatki = 6;
 
-iteracja = 100; % Odgórny limit iteracji potrzebny do zbieżności
+iteracja = 10; % Odgórny limit iteracji potrzebny do zbieżności
 
 %% =========== Ustawienie parametrów dla SOM =========
 % Początkowy rozmiar sąsiedztwa topologicznego zwycięskiego neuronu
-poczatkowyRozmiarSasiedztwa = 5;
+poczatkowyRozmiarSasiedztwa = 3;
 
 % Stała czasowa początkowego rozmiaru sąsiedztwa topologicznego
 % skąd jest wzór na to - i dlaczego akurat logarytm naturalny? <- ja ten
@@ -110,6 +110,8 @@ poczatkowyWspolczynnikUczenia = 1;
 wspolczynnikNauki = iteracja; % Stała czasowa dla zmiennej w czasie szybkości uczenia się
 
 mapaSOM = inicjalizacjaWag(liczbaWierszySiatki,liczbaKolumnSiatki,size(zbiorTreningowy,2));
+
+rysujDane(zbiorTreningowy(:,1:5),zbiorTreningowy(:,6))
 
 %% =========== Proces uczenia sieci SOM =========
 
@@ -126,8 +128,10 @@ for t = 1:iteracja
     [~,indeks2] = min(dystansEntropy(:));
     [wygranyRzad,wygranaKolumna] = ind2sub(size(dystansEntropy),indeks2);
 
+    % ustalenie sasiedztwa neuronów
     neighborhood = obliczNajblizszegoSasiada(liczbaWierszySiatki, liczbaKolumnSiatki, wygranyRzad, ...
                                             wygranaKolumna, wariancjaSzerokosci);
+    % aktualizacja mapy
     mapaSOM = aktualizacjaWag(zbiorTreningowy, mapaSOM, liczbaWierszySiatki, liczbaKolumnSiatki, ...
                                 size(zbiorTreningowy,2), indeks, wskaznikNauki, neighborhood);
     
@@ -138,13 +142,12 @@ for t = 1:iteracja
     % zmienna pomocnicza
     indeks2 = 1;  
     hold on;
-    f1 = figure(1);
-    set(f1,'name',strcat('iteracja #',num2str(t)),'numbertitle','off');
+    figure(1);
 
     % Pobierz wektor wagowy neuronu
     for r = 1:liczbaWierszySiatki
         for c = 1:liczbaKolumnSiatki      
-            wektorWag(indeks2,:)=reshape(mapaSOM(r,c,:),1,size(zbiorTreningowy,2));
+            wektorWag(indeks2,:) = reshape(mapaSOM(r,c,:),1,size(zbiorTreningowy,2));
             indeks2 = indeks2 + 1;
         end
     end
@@ -158,7 +161,16 @@ for t = 1:iteracja
         rzad2 = r*liczbaWierszySiatki;
         wiersz1 = liczbaWierszySiatki*liczbaKolumnSiatki;
         figure(2)
-        plot(t,4)
+        plot(t,4) % <- tutaj trzeba ogarnąć jak rysować wykres funkcji błedu od iteracji
+        % prawdopdoobnie trzeba wpasc na pomysl w jaki sposob robimy
+        % klasyfikacje zlosliwa/lagodna. W 1 czesci napisalismy cos
+        % takiego: decyzja związana z ustaleniem grupy danego wektora cech jest realizowana na podstawie
+        % podobieństwa wartości zbiorów. Tworzona jest zmienna decyzyjna 𝑞, która w zależności od wartości
+        % podobieństwa względem całego zbioru danych i jego 𝑁 regionów, wybiera k-tą ilość regionów i liczony
+        % jest wtedy ułamek 𝑓𝑚 złośliwych regionów. Ustawiany jest próg decyzyjny 𝐶𝑓 (z zakresu od 0 do 1), a
+        % przypadek dla nowotworu złośliwego egzekwowany jest w przypadku 𝑓𝑚 ≥ 𝐶𝑓 (inaczej klasyfikowana jest
+        % zmiana łagodna) 
+        % ((((Sam to jeszcze sprobuje przemyslec))))
         figure(1)
         macierz(2*r-1,1) = plot(wektorWag(rzad1:rzad2,1),wektorWag(rzad1:rzad2,2),'--ro','LineWidth',2,'MarkerEdgeColor','g','MarkerFaceColor','g','MarkerSize',4);
         macierz(2*r,1) = plot(wektorWag(r:liczbaKolumnSiatki:wiersz1,1),wektorWag(r:liczbaKolumnSiatki:wiersz1,2),'--ro','LineWidth',2,'MarkerEdgeColor','g','MarkerFaceColor','g','MarkerSize',4);
