@@ -142,7 +142,7 @@ for t = 1:iteracja
     % zmienna pomocnicza
     pomocnicza = 1;  
     figure(1);
-    title('Mapa SOM - na podstawie wektorów wag')
+    title('Mapa SOM - ')
     hold on;
 
     % Pobierz wektor wagowy neuronu
