@@ -7,6 +7,7 @@
 clear;
 clc;
 close all;
+format long
 
 %% ========= Wczytanie danych =========
 
@@ -93,7 +94,7 @@ zbiorTreningowy = [Malignant(uint64(size(Malignant,1)/2)+1:size(Malignant,1),:) 
 liczbaWierszySiatki = 5;
 liczbaKolumnSiatki = 5;
 
-iteracja = 15; % Odgórny limit iteracji potrzebny do zbieżności
+iteracja = 100; % Odgórny limit iteracji potrzebny do zbieżności
 
 %% =========== Ustawienie parametrów dla SOM =========
 % Początkowy rozmiar sąsiedztwa topologicznego zwycięskiego neuronu
@@ -112,6 +113,8 @@ wspolczynnikNauki = iteracja; % Stała czasowa dla zmiennej w czasie szybkości 
 mapaSOM = inicjalizacjaWag(liczbaWierszySiatki,liczbaKolumnSiatki,size(zbiorTreningowy(:,1:5),2));
 
 rysujDane(zbiorTreningowy(:,1:5),zbiorTreningowy(:,6))
+
+blad = zeros(iteracja,1);
 
 %% =========== Proces uczenia sieci SOM =========
 
@@ -162,9 +165,9 @@ for t = 1:iteracja
         rzad1 = 1+liczbaWierszySiatki*(r-1);
         rzad2 = r*liczbaWierszySiatki;
         wiersz1 = liczbaWierszySiatki*liczbaKolumnSiatki;
+        blad(iteracja) = 2;
         figure(2)
-        blad = 1;
-        scatter(t,blad) % <- tutaj trzeba ogarnąć jak rysować wykres funkcji błedu od iteracji
+        plot(blad) % <- tutaj trzeba ogarnąć jak rysować wykres funkcji błedu od iteracji
         % prawdopdoobnie trzeba wpasc na pomysl w jaki sposob robimy
         % klasyfikacje zlosliwa/lagodna. W 1 czesci napisalismy cos
         % takiego: decyzja związana z ustaleniem grupy danego wektora cech jest realizowana na podstawie
@@ -182,5 +185,55 @@ for t = 1:iteracja
     if t~=iteracja
         figure(1)
         clf
+    end
+end
+
+%% <TUTAJ TESTOWALEM TYLKO na podstawie tego repo: https://github.com/KatarzynaRzeczyca/SOM_neural_network> 
+
+%% ========= Kalibracja =========
+
+% średnie wektory zmian zlosliwych i lagodnych
+sr_lagodny = sum(Malignant(1:uint64(size(Malignant,1)/2),1:5),'omitnan')/size(Malignant,1)/2;
+sr_zlosliwy = sum(Benign(1:uint64(size(Benign,1)/2),1:5),'omitnan')/size(Benign,1)/2;
+f=1;
+p=1;
+for j=1:liczbaWierszySiatki
+    for l=1:liczbaKolumnSiatki
+        d_lagodny = norm(sr_lagodny-reshape(mapaSOM(j,l,:),1,size(zbiorTreningowy(:,1:5),2)));
+        d_zlosliwy = norm(sr_zlosliwy-reshape(mapaSOM(j,l,:),1,size(zbiorTreningowy(:,1:5),2)));
+        if d_lagodny >= d_zlosliwy
+            wsp_lagodny(f,:) = [j,l];
+            f = f+1;
+        elseif d_lagodny < d_zlosliwy
+            wsp_zlosliwy(p,:) = [j,l];
+            p = p+1;
+        end
+    end
+end
+
+%% ========= Test =========
+
+liczbaz=0;   %liczba zdiagnozowanych zmian zlosliwych
+liczbal=0;   %liczba zdiagnozowanych zmian lagonych
+
+for t = 1:size(zbiorTestowy,1)
+    d_test = zeros(liczbaWierszySiatki*liczbaKolumnSiatki,liczbaWierszySiatki*liczbaKolumnSiatki);
+    for j = 1:liczbaWierszySiatki
+        for l = 1:liczbaKolumnSiatki
+            d_test(j,l)=norm(zbiorTestowy(t,1:5)-reshape(mapaSOM(j,l,:),1,size(zbiorTreningowy(:,1:5),2)));
+        end
+    end
+    [~,pomocnicza] = min(dystansEntropy(:));
+    [wygranyRzad,wygranaKolumna] = ind2sub(size(dystansEntropy),pomocnicza);
+    
+    for i=1:size(wsp_lagodny,1)
+        if wsp_lagodny(i,:)==[wygranyRzad,wygranaKolumna]
+            liczbaz = liczbaz + 1;
+        end
+    end
+    for i=1:size(wsp_zlosliwy,1)
+        if wsp_zlosliwy(i,:)==[wygranyRzad,wygranaKolumna]
+            liczbal = liczbal + 1;
+        end
     end
 end
