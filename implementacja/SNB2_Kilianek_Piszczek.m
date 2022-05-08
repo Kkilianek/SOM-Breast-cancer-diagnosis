@@ -175,47 +175,80 @@ end
 %% ========= Kalibracja =========
 
 % średnie wektory zmian zlosliwych i lagodnych
-sr_zlosliwy = sum(Malignant(1:uint64(size(Malignant,1)/2),1:5),'omitnan')/size(Malignant,1)/2;
-sr_lagodny = sum(Benign(1:uint64(size(Benign,1)/2),1:5),'omitnan')/size(Benign,1)/2;
-f=1;
-p=1;
-for j=1:liczbaWierszySiatki
-    for l=1:liczbaKolumnSiatki
-        d_lagodny = norm(sr_lagodny-reshape(mapaSOM(j,l,:),1,size(zbiorTreningowy(:,1:5),2)))
-        d_zlosliwy = norm(sr_zlosliwy-reshape(mapaSOM(j,l,:),1,size(zbiorTreningowy(:,1:5),2)))
-        if d_lagodny >= d_zlosliwy
-            wsp_lagodny(f,:) = [j,l];
-            f = f+1;
-        elseif d_lagodny < d_zlosliwy
-            wsp_zlosliwy(p,:) = [j,l];
-            p = p+1;
+% sr_zlosliwy = sum(Malignant(1:uint64(size(Malignant,1)/2),1:5),'omitnan')/size(Malignant,1)/2;
+% sr_lagodny = sum(Benign(1:uint64(size(Benign,1)/2),1:5),'omitnan')/size(Benign,1)/2;
+% f=1;
+% p=1;
+% for j=1:liczbaWierszySiatki
+%     for l=1:liczbaKolumnSiatki
+%         d_lagodny = norm(sr_lagodny-reshape(mapaSOM(j,l,:),1,size(zbiorTreningowy(:,1:5),2)))
+%         d_zlosliwy = norm(sr_zlosliwy-reshape(mapaSOM(j,l,:),1,size(zbiorTreningowy(:,1:5),2)))
+%         if d_lagodny >= d_zlosliwy
+%             wsp_lagodny(f,:) = [j,l];
+%             f = f+1;
+%         elseif d_lagodny < d_zlosliwy
+%             wsp_zlosliwy(p,:) = [j,l];
+%             p = p+1;
+%         end
+%     end
+% end
+
+kalibracja=[Malignant(1:uint64(size(Malignant,1)/2),1:5) ; Benign(1:uint64(size(Benign,1)/2),1:5)];
+wspolrzedne=[0 0 ; 0 0];    %inicjalizacja wektora przechowującego współrzędne wyznaczonych neuronów
+for i=1:2   %iteracja po wektorach kalibrujących
+    d=zeros(liczbaWierszySiatki,liczbaKolumnSiatki);   %macierz wartości roznicy miedzy kazdym neuronem i wektorem kalibrującym
+    for j=1:liczbaWierszySiatki    %iteracja po neuronach-wiersze sieci
+        for l=1:liczbaKolumnSiatki    %iteracja po neuronach-kolumny sieci
+            d(j,l)=norm(kalibracja(i)-reshape(mapaSOM(j,l,:),1,size(zbiorTreningowy(:,1:5),2)));
         end
     end
+    [M,I1]=min(d);
+    [M,I2]=min(M);  %I2-nr. kolumny sieci; I1(I2)-nr.wiersza
+    wspolrzedne(i,:)=[I1(I2),I2];
 end
 
 %% ========= Test =========
 
-liczbaz=0;   %liczba zdiagnozowanych zmian zlosliwych
-liczbal=0;   %liczba zdiagnozowanych zmian lagonych
+% liczbaz=0;   %liczba zdiagnozowanych zmian zlosliwych
+% liczbal=0;   %liczba zdiagnozowanych zmian lagonych
+% 
+% for t = 1:size(zbiorTestowy,1)
+%     d_test = zeros(liczbaWierszySiatki*liczbaKolumnSiatki,liczbaWierszySiatki*liczbaKolumnSiatki);
+%     for j = 1:liczbaWierszySiatki
+%         for l = 1:liczbaKolumnSiatki
+%             d_test(j,l)=norm(zbiorTestowy(t,1:5)-reshape(mapaSOM(j,l,:),1,size(zbiorTreningowy(:,1:5),2)));
+%         end
+%     end
+%     [~,pomocnicza] = min(dystansEntropy(:));
+%     [wygranyRzad,wygranaKolumna] = ind2sub(size(dystansEntropy),pomocnicza);
+%     
+%     for i=1:size(wsp_lagodny,1)
+%         if wsp_lagodny(i,:)==[wygranyRzad,wygranaKolumna]
+%             liczbaz = liczbaz + 1;
+%         end
+%     end
+%     for i=1:size(wsp_zlosliwy,1)
+%         if wsp_zlosliwy(i,:)==[wygranyRzad,wygranaKolumna]
+%             liczbal = liczbal + 1;
+%         end
+%     end
+% end
 
-for t = 1:size(zbiorTestowy,1)
-    d_test = zeros(liczbaWierszySiatki*liczbaKolumnSiatki,liczbaWierszySiatki*liczbaKolumnSiatki);
-    for j = 1:liczbaWierszySiatki
-        for l = 1:liczbaKolumnSiatki
-            d_test(j,l)=norm(zbiorTestowy(t,1:5)-reshape(mapaSOM(j,l,:),1,size(zbiorTreningowy(:,1:5),2)));
+[wt,kt]=size(zbiorTestowy);  %w-wiersze; k-kolumny
+lp=0;   %liczba zdiagnozowanych patologii
+lf=0;   %liczba zdiagnozowanych fizjologii
+for i=1:wt   %iteracja po wektorach testujacych
+    d=zeros(liczbaWierszySiatki,liczbaKolumnSiatki);   %macierz wartości roznicy miedzy kazdym neuronem i wektorem testujacym
+    for j=1:liczbaWierszySiatki    %iteracja po neuronach-wiersze sieci
+        for l=1:liczbaKolumnSiatki    %iteracja po neuronach-kolumny sieci
+            d(j,l)=norm(zbiorTestowy(i,1:5)-reshape(mapaSOM(j,l,:),1,size(zbiorTreningowy(:,1:5),2)));
         end
     end
-    [~,pomocnicza] = min(dystansEntropy(:));
-    [wygranyRzad,wygranaKolumna] = ind2sub(size(dystansEntropy),pomocnicza);
-    
-    for i=1:size(wsp_lagodny,1)
-        if wsp_lagodny(i,:)==[wygranyRzad,wygranaKolumna]
-            liczbaz = liczbaz + 1;
-        end
-    end
-    for i=1:size(wsp_zlosliwy,1)
-        if wsp_zlosliwy(i,:)==[wygranyRzad,wygranaKolumna]
-            liczbal = liczbal + 1;
-        end
+    [M,I1]=min(d);
+    [M,I2]=min(M);  %I2-nr. kolumny sieci; I1(I2)-nr.wiersza
+    if I1(I2)<=wspolrzedne(1,1) && I2<=wspolrzedne(1,2)
+        lp=lp+1;
+    elseif I1(I2)>=wspolrzedne(2,1) && I2>=wspolrzedne(2,2)
+        lf=lf+1;
     end
 end
