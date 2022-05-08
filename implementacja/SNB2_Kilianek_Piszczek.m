@@ -11,7 +11,8 @@ format long
 
 %% ========= Wczytanie danych =========
 
-% Dane wczytane są w kolejnych kolumnach BI-RADS,Age,Shape,Margin,Density,Severity
+% Dane wczytane są w kolejnych kolumnach:
+% BI-RADS, Age, Shape, Margin, Density, Severity
 try
     M = readtable('mammographic_masses.data.txt'); % przekonwertowanie plików na txt
 catch 
@@ -23,14 +24,6 @@ end
 size1 = size(M,1); % zapisanie ilości wektorów cech przed preprocessingiem
 M = table2array(M); % zamiana na dane numeryczne
 M(any(ismissing(M),2),:) = []; % <- może jednak będzie trzeba usunac te dane :?
-
-% Proponowany sposób kodowania danych numerycznych -> single
-% (single-precision number), ponieważ mamy do czynienia z liczbami 
-% całkowitymi typu integer
-single(M); 
-
-% usunięcie złych danych pierwszej cechy (BI-RADS) z poza zdefiniowanego zakresu 1-5
-% ustawienie warunków pilnujących podane zakresy cech:
 
 % Pierwszy wektor cech (BI-RADS):
 Cond1 = M(:,1) > 5;
@@ -59,26 +52,14 @@ numOfDeletedRows = size1 - size2; % ilość danych, które zostały usunięte
 
 %% ========= Preprocessing danych (etap 2) =========
 
-% Przed podaniem danych wejściowych do sieci neuronowej musimy jeszcze
-% przeprowadzić operację normalizacji, tak aby każda z cech miała
-% identyczny wpływ na proces uczenia się sieci. Jeżeli nie dokonalibyśmy
-% takich operacji, to jedna z cech (w naszym przypadku wektorWagycząca wieku),
-% miałaby największy wpływ na rozkład danych, przez to, że jej rozpiętość
-% jest największa wynosząca od 18 do 96 lat. Dlatego też poniżej
-% dokonaliśmy przekształceń tak aby każda cecha przyjmowała wartości w
-% zakresie od 0 do 1.
-
-% Zgodnie ze wzorem źródło: http://lh3.ggpht.com/_MrdHIr826C4/Sl7eVpJOYfI/AAAAAAAAB34/MCFvz1r_CZQ/s800/7.JPG
-M(:,1) = (M(:,1)-min(M(:,1)))/(max(M(:,1)-min(M(:,1)))) * (1-0) + 0;
-M(:,2) = (M(:,2)-min(M(:,2)))/(max(M(:,2)-min(M(:,2)))) * (1-0) + 0;
-M(:,3) = (M(:,3)-min(M(:,3)))/(max(M(:,3)-min(M(:,3)))) * (1-0) + 0;
-M(:,4) = (M(:,4)-min(M(:,4)))/(max(M(:,4)-min(M(:,4)))) * (1-0) + 0;
-M(:,5) = (M(:,5)-min(M(:,5)))/(max(M(:,5)-min(M(:,5)))) * (1-0) + 0;
+% M(:,1) = (M(:,1)-min(M(:,1)))/(max(M(:,1)-min(M(:,1)))) * (1-0) + 0;
+% M(:,2) = (M(:,2)-min(M(:,2)))/(max(M(:,2)-min(M(:,2)))) * (1-0) + 0;
+% M(:,3) = (M(:,3)-min(M(:,3)))/(max(M(:,3)-min(M(:,3)))) * (1-0) + 0;
+% M(:,4) = (M(:,4)-min(M(:,4)))/(max(M(:,4)-min(M(:,4)))) * (1-0) + 0;
+% M(:,5) = (M(:,5)-min(M(:,5)))/(max(M(:,5)-min(M(:,5)))) * (1-0) + 0;
 
 %% ========= Preprocessing danych (etap 3) =========
 
-% Podział danych na złośliwe i łagodne, tak aby przedstawić histogramy cech
-% w klasach, które są klasyfikowane
 M = sortrows(M,6);
 malignant = M(:,6) == 1;
 benign = M(:,6) == 0;
@@ -200,8 +181,8 @@ f=1;
 p=1;
 for j=1:liczbaWierszySiatki
     for l=1:liczbaKolumnSiatki
-        d_lagodny = norm(sr_lagodny-reshape(mapaSOM(j,l,:),1,size(zbiorTreningowy(:,1:5),2)));
-        d_zlosliwy = norm(sr_zlosliwy-reshape(mapaSOM(j,l,:),1,size(zbiorTreningowy(:,1:5),2)));
+        d_lagodny = norm(sr_lagodny-reshape(mapaSOM(j,l,:),1,size(zbiorTreningowy(:,1:5),2)))
+        d_zlosliwy = norm(sr_zlosliwy-reshape(mapaSOM(j,l,:),1,size(zbiorTreningowy(:,1:5),2)))
         if d_lagodny >= d_zlosliwy
             wsp_lagodny(f,:) = [j,l];
             f = f+1;
