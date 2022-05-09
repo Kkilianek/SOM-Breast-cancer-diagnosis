@@ -1,4 +1,4 @@
-function [obliczonyDystans, i] = entropyDistance(zbiorTreningowy, mapaSOM, liczbaWierszySiatki,...
+function [obliczonyDystans, i] = najbizszyDystans(zbiorTreningowy, mapaSOM, liczbaWierszySiatki,...
                                 liczbaKolumnSiatki, iloscDanych, wymiarDanych)
 % Opis funkcji...
 
@@ -8,7 +8,7 @@ function [obliczonyDystans, i] = entropyDistance(zbiorTreningowy, mapaSOM, liczb
     
     for r = 1:liczbaWierszySiatki
         for c = 1:liczbaKolumnSiatki
-            V = zbiorTreningowy(i,:) .* log(zbiorTreningowy(i,:)/reshape(mapaSOM(r,c,:),1,wymiarDanych));
+            V = zbiorTreningowy(i,:) - reshape(mapaSOM(r,c,:),1,wymiarDanych);
             obliczonyDystans(r,c) = sqrt(V*V');
         end
     end
