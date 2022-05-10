@@ -132,9 +132,9 @@ for t = 1:iteracja
 
     licznik = 0; % zliczający błędną klasyfikację sieci 
 
-    figure(1);
-    title('Mapa SOM - na podstawie wektorów wag')
-    hold on;
+%     figure(1);
+%     title('Mapa SOM - na podstawie wektorów wag')
+%     hold on;
 
     % Pobierz wektor wagowy neuronu
     for r = 1:liczbaWierszySiatki
@@ -146,19 +146,65 @@ for t = 1:iteracja
     
     figure(2)
     title('Proces uczenia sieci (przebieg błędu w zależności od liczby iteracji)')
+    hold on;
     xlabel('iteracja')
     ylabel('błąd klasyfikacji [w %]')
 
     % Rysuj siatke SOM
-    for r = 1:liczbaWierszySiatki
-        wiersz1 = 1+liczbaWierszySiatki*(r-1);
-        wiersz2 = r*liczbaWierszySiatki;
-        kolumna = liczbaWierszySiatki*liczbaKolumnSiatki;
-        figure(1)
-        macierz(2*r-1,1) = plot(wektorWag(wiersz1:wiersz2,1),wektorWag(wiersz1:wiersz2,2),'--ro','LineWidth',2,'MarkerEdgeColor','g','MarkerFaceColor','g','MarkerSize',4);
-        macierz(2*r,1) = plot(wektorWag(r:liczbaKolumnSiatki:kolumna,1),wektorWag(r:liczbaKolumnSiatki:kolumna,2),'--ro','LineWidth',2,'MarkerEdgeColor','g','MarkerFaceColor','g','MarkerSize',4);
-    end
-    
+%     for r = 1:liczbaWierszySiatki
+%         wiersz1 = 1+liczbaWierszySiatki*(r-1);
+%         wiersz2 = r*liczbaWierszySiatki;
+%         kolumna = liczbaWierszySiatki*liczbaKolumnSiatki;
+%         figure(1)
+%         macierz(2*r-1,1) = plot(wektorWag(wiersz1:wiersz2,1),wektorWag(wiersz1:wiersz2,2),'--ro','LineWidth',2,'MarkerEdgeColor','g','MarkerFaceColor','g','MarkerSize',4);
+%         macierz(2*r,1) = plot(wektorWag(r:liczbaKolumnSiatki:kolumna,1),wektorWag(r:liczbaKolumnSiatki:kolumna,2),'--ro','LineWidth',2,'MarkerEdgeColor','g','MarkerFaceColor','g','MarkerSize',4);
+%     end
+%% =========== Kalibracja sieci SOM v1 =========    
+% Wczytanie danych
+MalignantMean = sum(Malignant(uint64(size(Malignant,1)/2)+1:size(Malignant,1),1:5))/216; %średni wektor danych patologicznych
+BenignMean = sum(Benign(uint64(size(Benign,1)/2)+1:size(Benign,1),1:5))/255; %średni wektor danych fizjologicznych
+f=1;
+p=1;
+for j=1:liczbaWierszySiatki %iteracja po neuronach-wiersze sieci
+ for l=1:liczbaKolumnSiatki %iteracja po neuronach-kolumny sieci
+ d_pato = norm(MalignantMean-reshape(mapaSOM(j,l,:),1,size(zbiorTreningowy(:,1:5),2)));
+ d_fizjo = norm(BenignMean-reshape(mapaSOM(j,l,:),1,size(zbiorTreningowy(:,1:5),2)));
+ if d_pato >= d_fizjo
+    wsp_fizjo(f,:) = [j,l];
+    f = f+1;
+ elseif d_pato < d_fizjo
+    wsp_pato(p,:) = [j,l];
+    p = p+1;
+ end
+ end
+end
+%% =========== Test sieci SOM v1 =========  
+[wt,~]=size(zbiorTestowy); %w-wiersze; k-kolumny
+lp=0; %liczba zdiagnozowanych patologii
+lf=0; %liczba zdiagnozowanych fizjologii
+for w=1:wt
+    d_test = zeros(liczbaWierszySiatki,liczbaKolumnSiatki);
+ for j = 1:liczbaWierszySiatki
+ for l = 1:liczbaKolumnSiatki
+ d_test(j,l)=norm(zbiorTestowy(w,1:5)-reshape(mapaSOM(j,l,:),1,size(zbiorTreningowy(:,1:5),2)));
+ end
+ end
+ [~,pomocnicza] = min(d_test(:));
+ [wr,wk] = ind2sub(size(d_test),pomocnicza);
+ wynik = classification(wr,wk, wsp_fizjo, wsp_pato);
+ if wynik == 0
+ lf = lf+1;
+ elseif wynik == 1
+ lp = lp+1;
+ end
+end
+wektorwynikow(t,:)=[iteracja,lp,lf];
+% s=s+1;
+% sredniwynik=zeros(13,3);
+% for i=1:13
+% sredniwynik(i,:)=[a(i),mean(wektorwynikow((i-1)*10+1:i*10,2)),mean(wektorwynikow((i-1)*10+1:i*10,3))];
+% end
+%% =========== Kalibracja sieci SOM v2 =========  
     kalibracja=[Malignant(1:uint64(size(Malignant,1)/2),1:5) ; Benign(1:uint64(size(Benign,1)/2),1:5)];
     wspolrzedne=[0 0 ; 0 0]; % inicjalizacja wektora przechowującego współrzędne wyznaczonych neuronów
     for i=1:2 % iteracja po wektorach kalibrujących
@@ -172,7 +218,7 @@ for t = 1:iteracja
         [M,I2]=min(M);  % I2-nr. kolumny sieci; I1(I2)-nr.wiersza
         wspolrzedne(i,:)=[I1(I2),I2];
     end
-    
+%% =========== Test sieci SOM v2 =========      
     [wt,kt]=size(zbiorTestowy);  % w-wiersze; k-kolumny
     liczbaZlosliwych=0;   % liczba zdiagnozowanych patologii
     liczbaLagodnych=0;   % liczba zdiagnozowanych fizjologii
@@ -208,10 +254,8 @@ for t = 1:iteracja
         clf; % wyczysczenie wykresu ilustrujacego mape som po kazdej iteracji
     end
 end
-
 figure(2)
 yline(mean(blad),'--k','wartość średnia');
-
 %% =========== Wyniki procesu uczenia sieci SOM =========
 
 fprintf("Liczba zmian złośliwych w zbiorze testującym: " + sum(zbiorTestowy(:,6) == 1));
