@@ -8,7 +8,8 @@ clear;
 clc;
 close all;
 format long
-
+%ustawienie ziarna generatora liczb losowych
+rng(1) %<-- tu wartość nie ma znaczenia, ważne żeby testować przy tej samej
 %% ========= Wczytanie danych =========
 
 % Dane wczytane są w kolejnych kolumnach:
@@ -23,7 +24,12 @@ end
 
 size1 = size(M,1); % zapisanie ilości wektorów cech przed preprocessingiem
 M = table2array(M); % zamiana na dane numeryczne
-M(any(ismissing(M),2),:) = []; %tutaj trzeba dodac srednie wartosc dla brakujacych elementow
+
+%zastąpienie brakujących wartości parametrem statystycznym
+for i=1:5
+    M(any(ismissing(M(:,i)),2),i)=median(M(:,i),'omitnan');
+end
+
 
 % Pierwszy wektor cech (BI-RADS):
 Cond1 = M(:,1) > 5;
@@ -73,14 +79,15 @@ zbiorTreningowy = [Malignant(uint64(size(Malignant,1)/2)+1:size(Malignant,1),:) 
 
 %% ========= Implementacja sieci SOM =========
 
+%ustalanie rozmiarów sieci
 liczbaWierszySiatki = 6;
 liczbaKolumnSiatki = 6;
 
-iteracja = 15; % Odgórny limit iteracji potrzebny do zbieżności
+iteracja = 100; % Odgórny limit iteracji potrzebny do zbieżności
 
 %% =========== Ustawienie parametrów dla SOM =========
 % Początkowy topologiczny rozmiar sąsiedztwa zwycięskiego neuronu
-poczatkowyRozmiarSasiedztwa = 1;
+poczatkowyRozmiarSasiedztwa = 10;
 
 % Stała czasowa początkowego rozmiaru sąsiedztwa topologicznego
 stalaCzasowa = iteracja/log(poczatkowyRozmiarSasiedztwa);
@@ -91,6 +98,8 @@ poczatkowyWspolczynnikUczenia = 1;
 wspolczynnikNauki = iteracja; % Stała czasowa dla zmiennej w czasie szybkości uczenia się
 
 mapaSOM = inicjalizacjaWag(liczbaWierszySiatki,liczbaKolumnSiatki,size(zbiorTreningowy(:,1:5),2));
+
+blad = zeros(iteracja,1); % wektor przechowujący obliczony błąd
 
 %% =========== Proces uczenia sieci SOM =========
 
@@ -118,6 +127,7 @@ for t = 1:iteracja
     wektorWag = zeros(liczbaWierszySiatki*liczbaKolumnSiatki, size(zbiorTreningowy(:,1:5),2));
     % Macierz SOM do rysowania
     macierz = zeros(liczbaWierszySiatki*liczbaKolumnSiatki,1);
+    backup=zeros(liczbaWierszySiatki*liczbaKolumnSiatki,1);
  
     pomocnicza = 1; % zmienna pomocnicza w operacjach z wagami
 
@@ -142,12 +152,23 @@ for t = 1:iteracja
 
     % Rysuj siatke SOM
     for r = 1:liczbaWierszySiatki
-        rzad1 = 1+liczbaWierszySiatki*(r-1);
-        rzad2 = r*liczbaWierszySiatki;
-        wiersz1 = liczbaWierszySiatki*liczbaKolumnSiatki;
-        figure(1)
-        macierz(2*r-1,1) = plot(wektorWag(rzad1:rzad2,1),wektorWag(rzad1:rzad2,2),'--ro','LineWidth',2,'MarkerEdgeColor','g','MarkerFaceColor','g','MarkerSize',4);
-        macierz(2*r,1) = plot(wektorWag(r:liczbaKolumnSiatki:wiersz1,1),wektorWag(r:liczbaKolumnSiatki:wiersz1,2),'--ro','LineWidth',2,'MarkerEdgeColor','g','MarkerFaceColor','g','MarkerSize',4);
+        wiersz1 = 1+liczbaWierszySiatki*(r-1);
+        wiersz2 = r*liczbaWierszySiatki;
+        kolumna1 = liczbaWierszySiatki*liczbaKolumnSiatki;
+%         figure(1)
+        macierz(2*r-1,1) = plot(wektorWag(kolumna1:wiersz2,1),wektorWag(kolumna1:wiersz2,2),'--ro','LineWidth',2,'MarkerEdgeColor','g','MarkerFaceColor','g','MarkerSize',4);
+        macierz(2*r,1) = plot(wektorWag(r:liczbaKolumnSiatki:kolumna1,1),wektorWag(r:liczbaKolumnSiatki:kolumna1,2),'--ro','LineWidth',2,'MarkerEdgeColor','g','MarkerFaceColor','g','MarkerSize',4);
+
+        backup(2*r-1,1) = macierz(2*r-1,1);
+        backup(2*r,1) = macierz(2*r,1);
+    end
+
+     if t~=iteracja
+        for r = 1:liczbaWierszySiatki
+            delete(backup(2*r-1,1));
+            delete(backup(2*r,1));
+            drawnow;
+        end
     end
     
     kalibracja=[Malignant(1:uint64(size(Malignant,1)/2),1:5) ; Benign(1:uint64(size(Benign,1)/2),1:5)];
@@ -174,9 +195,8 @@ for t = 1:iteracja
                 d(j,l)=norm(zbiorTestowy(i,1:5)-reshape(mapaSOM(j,l,:),1,size(zbiorTreningowy(:,1:5),2)));
             end
         end
-        [M,I1]=min(d)
-        [M,I2]=min(M) % I2-nr. kolumny sieci; I1(I2)-nr.wiersza
-        wspolrzedne
+        [M,I1]=min(d);
+        [M,I2]=min(M); % I2-nr. kolumny sieci; I1(I2)-nr.wiersza
         if I1(I2)<=wspolrzedne(1,1) && I2<=wspolrzedne(1,2)
             if zbiorTestowy(wt,6) == 0
                 licznik = licznik + 1;
@@ -190,16 +210,16 @@ for t = 1:iteracja
         end
     end
     
-    blad = licznik/wt; % obliczenie stosunku liczby błednie zdiagnozowanych zmian do wszystkich testów
+    blad(t) = licznik/wt; % obliczenie stosunku liczby błednie zdiagnozowanych zmian do wszystkich testów
     figure(2)
     hold on;
-    plot(t,blad,'*b') % wykreślenie błędu
+    plot(t,blad(t),'*b') % wykreślenie błędu
     
-    if t~=iteracja
-        figure(1)
-        clf; % wyczysczenie wykresu ilustrujacego mape som po kazdej iteracji
-    end
+   
 end
+
+figure(2)
+yline(mean(blad),'--k','wartość średnia');
 
 %% =========== Wyniki procesu uczenia sieci SOM =========
 
@@ -207,7 +227,7 @@ fprintf("Liczba zmian złośliwych w zbiorze testującym: " + sum(zbiorTestowy(:
 fprintf("\nLiczba zmian łagodynch w zbiorze testującym: " + sum(zbiorTestowy(:,6) == 0));
 fprintf("\nLiczba sklasyfikowanych zmian złośliwych w ostatniej iteracji: " + liczbaZlosliwych);
 fprintf("\nLiczba sklasyfikowanych zmian łagodynch w ostatniej iteracji: " + liczbaLagodnych);
-fprintf("\nBłąd klasyfikacji po " + iteracja + " iteracjach wynosi: " + blad + "\n");
+fprintf("\nBłąd klasyfikacji po " + iteracja + " iteracjach wynosi: " + blad(iteracja) + "\n");
 
 % tutaj trzeba okreslic czulosc/specyficznosc, jeszcze wypisac jakie byly
 % wspolczynniki lagodne/zlosliwe, ktore byly potrzebne do klasyfikacji (w

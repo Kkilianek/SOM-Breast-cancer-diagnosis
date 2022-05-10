@@ -8,7 +8,8 @@ clear;
 clc;
 close all;
 format long
-
+%ustawienie ziarna generatora liczb losowych
+rng(1) %<-- tu wartość nie ma znaczenia, ważne żeby testować przy tej samej
 %% ========= Wczytanie danych =========
 
 % Dane wczytane są w kolejnych kolumnach:
@@ -78,14 +79,15 @@ zbiorTreningowy = [Malignant(uint64(size(Malignant,1)/2)+1:size(Malignant,1),:) 
 
 %% ========= Implementacja sieci SOM =========
 
+%ustalanie rozmiarów sieci
 liczbaWierszySiatki = 6;
 liczbaKolumnSiatki = 6;
 
-iteracja = 100; % Odgórny limit iteracji potrzebny do zbieżności
+iteracja = 1000; % Odgórny limit iteracji potrzebny do zbieżności
 
 %% =========== Ustawienie parametrów dla SOM =========
 % Początkowy topologiczny rozmiar sąsiedztwa zwycięskiego neuronu
-poczatkowyRozmiarSasiedztwa = 1;
+poczatkowyRozmiarSasiedztwa = 2;
 
 % Stała czasowa początkowego rozmiaru sąsiedztwa topologicznego
 stalaCzasowa = iteracja/log(poczatkowyRozmiarSasiedztwa);
@@ -149,12 +151,12 @@ for t = 1:iteracja
 
     % Rysuj siatke SOM
     for r = 1:liczbaWierszySiatki
-        rzad1 = 1+liczbaWierszySiatki*(r-1);
-        rzad2 = r*liczbaWierszySiatki;
-        wiersz1 = liczbaWierszySiatki*liczbaKolumnSiatki;
+        wiersz1 = 1+liczbaWierszySiatki*(r-1);
+        wiersz2 = r*liczbaWierszySiatki;
+        kolumna = liczbaWierszySiatki*liczbaKolumnSiatki;
         figure(1)
-        macierz(2*r-1,1) = plot(wektorWag(rzad1:rzad2,1),wektorWag(rzad1:rzad2,2),'--ro','LineWidth',2,'MarkerEdgeColor','g','MarkerFaceColor','g','MarkerSize',4);
-        macierz(2*r,1) = plot(wektorWag(r:liczbaKolumnSiatki:wiersz1,1),wektorWag(r:liczbaKolumnSiatki:wiersz1,2),'--ro','LineWidth',2,'MarkerEdgeColor','g','MarkerFaceColor','g','MarkerSize',4);
+        macierz(2*r-1,1) = plot(wektorWag(wiersz1:wiersz2,1),wektorWag(wiersz1:wiersz2,2),'--ro','LineWidth',2,'MarkerEdgeColor','g','MarkerFaceColor','g','MarkerSize',4);
+        macierz(2*r,1) = plot(wektorWag(r:liczbaKolumnSiatki:kolumna,1),wektorWag(r:liczbaKolumnSiatki:kolumna,2),'--ro','LineWidth',2,'MarkerEdgeColor','g','MarkerFaceColor','g','MarkerSize',4);
     end
     
     kalibracja=[Malignant(1:uint64(size(Malignant,1)/2),1:5) ; Benign(1:uint64(size(Benign,1)/2),1:5)];
