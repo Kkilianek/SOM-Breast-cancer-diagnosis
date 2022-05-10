@@ -23,7 +23,12 @@ end
 
 size1 = size(M,1); % zapisanie ilości wektorów cech przed preprocessingiem
 M = table2array(M); % zamiana na dane numeryczne
-M(any(ismissing(M),2),:) = []; %tutaj trzeba dodac srednie wartosc dla brakujacych elementow
+
+%zastąpienie brakujących wartości parametrem statystycznym
+for i=1:5
+    M(any(ismissing(M(:,i)),2),i)=median(M(:,i),'omitnan');
+end
+
 
 % Pierwszy wektor cech (BI-RADS):
 Cond1 = M(:,1) > 5;
