@@ -8,12 +8,10 @@ clear;
 clc;
 close all;
 format long
-rng(1) % ustawienie ziarna generatora liczb losowych
+rng(303803)
 
 %% ========= Wczytanie danych =========
 
-% Dane wczytane są w kolejnych kolumnach:
-% BI-RADS, Age, Shape, Margin, Density, Severity
 try
     M = readtable('mammographic_masses.data.txt'); % przekonwertowanie plików na txt
 catch 
@@ -82,7 +80,7 @@ zbiorTreningowy = [Malignant(uint64(size(Malignant,1)/2)+1:size(Malignant,1),:) 
 liczbaWierszySiatki = 6;
 liczbaKolumnSiatki = 6;
 
-iteracja = 100; % odgórny limit iteracji potrzebny do zbieżności
+iteracja = 10000; % odgórny limit iteracji potrzebny do zbieżności
 
 %% =========== Ustawienie parametrów dla SOM =========
 
@@ -97,7 +95,7 @@ wspolczynnikNauki = iteracja; % Stała czasowa dla zmiennej w czasie szybkości 
 
 siatkaSOM = inicjalizacjaWag(liczbaWierszySiatki,liczbaKolumnSiatki,size(zbiorTreningowy(:,1:5),2));
 
-blad = zeros(iteracja,1); % wektor przechowujący obliczony błąd
+blad = zeros(iteracja,1); % wektor przechowujący obliczony błąd w trakcie uczenia sieci
 
 %% =========== Proces uczenia sieci SOM =========
 
@@ -105,7 +103,7 @@ for t = 1:iteracja
     szerokosc = poczatkowyRozmiarSasiedztwa*exp(-t/stalaCzasowa);
     wariancjaSzerokosci = szerokosc^2;
     wskaznikNauki = poczatkowyWspolczynnikUczenia*exp(-t/wspolczynnikNauki);
-    if wskaznikNauki <0.01 
+    if wskaznikNauki < 0.01 
             wskaznikNauki = 0.1; % jeśli współczynnik jest bardzo mały ustaw stałą aprobowalną wielkość
     end
 
@@ -127,8 +125,6 @@ for t = 1:iteracja
     macierz = zeros(liczbaWierszySiatki*liczbaKolumnSiatki,1); % Macierz SOM do rysowania
  
     pomocnicza = 1; % zmienna pomocnicza w operacjach z wagami
-
-    licznik = 0; % zliczający błędną klasyfikację sieci 
     
     for r = 1:liczbaWierszySiatki
         for c = 1:liczbaKolumnSiatki      
@@ -144,8 +140,7 @@ for t = 1:iteracja
     ylabel('błąd klasyfikacji [w %]')
 
 %% =========== Kalibracja sieci SOM =========  
-    wspolrzedne=zeros(size(zbiorTreningowy,1),2); % inicjalizacja wektora przechowującego współrzędne wyznaczonych neuronów
-    
+    wspolrzedne=zeros(size(zbiorTreningowy,1),2); % inicjalizacja wektora przechowującego współrzędne wyznaczonych neuronów 
     d=zeros(liczbaWierszySiatki,liczbaKolumnSiatki); % macierz wartości roznicy miedzy kazdym neuronem i wektorem kalibrującym
     % 1-216 złośliwe
     % 217-471 łagodne
@@ -160,10 +155,12 @@ for t = 1:iteracja
             end
         end
     end
+
     wspolrzednezlosliwe=unique(wspolrzedne(1:216,:),'rows');
     wspolrzednelagodne=unique(wspolrzedne(217:end,:),'rows');
     iloscz=zeros(size(wspolrzednezlosliwe,1),1);
     iloscl=zeros(size(wspolrzednelagodne,1),1);
+
     for i=1:216
         for j=1:size(wspolrzednezlosliwe)
             if wspolrzedne(i,1)==wspolrzednezlosliwe(j,1) && wspolrzedne(i,2)==wspolrzednezlosliwe(j,2)
@@ -171,6 +168,7 @@ for t = 1:iteracja
             end
         end
     end
+
     for i=217:size(wspolrzedne,1)
         for j=1:size(wspolrzednelagodne)
             if wspolrzedne(i,1)==wspolrzednelagodne(j,1) && wspolrzedne(i,2)==wspolrzednelagodne(j,2)
@@ -178,145 +176,135 @@ for t = 1:iteracja
             end
         end
     end
+
     podsumz=[wspolrzednezlosliwe,iloscz];
     podsuml=[wspolrzednelagodne,iloscl];
-    klasyflagodne=setdiff(wspolrzednelagodne,wspolrzednezlosliwe,'rows');
-    klasyfzlosliwe=setdiff(wspolrzednezlosliwe,wspolrzednelagodne,'rows');
-    if size(klasyflagodne,1)>=size(klasyfzlosliwe,1)
-        klasyfikacja=klasyflagodne;
-        wybrano="l";
-        fprintf("Wybrano klasyfikację na podstawie zmian łagodnych"+newline);
-    else 
-        klasyfikacja=klasyfzlosliwe;
-        wybrano="z";
-        fprintf("Wybrano klasyfikację na podstawie zmian złośliwych"+newline);
+    heatmapazlosliwa = zeros(liczbaWierszySiatki,liczbaKolumnSiatki);
+    heatmapalagodna = zeros(liczbaWierszySiatki,liczbaKolumnSiatki);
+
+    for r = 1:liczbaWierszySiatki
+        for c = 1:liczbaKolumnSiatki 
+            for g = 1:size(podsumz,1)
+                if r == podsumz(g,1) && c == podsumz(g,2) 
+                    heatmapazlosliwa(r,c) = podsumz(g,3);
+                end
+            end
+        end
+    end
+    
+    for r = 1:liczbaWierszySiatki
+        for c = 1:liczbaKolumnSiatki 
+            for g = 1:size(podsuml,1)
+                if r == podsuml(g,1) && c == podsuml(g,2) 
+                    heatmapalagodna(r,c) = podsuml(g,3);
+                end
+            end
+        end
     end
 
+    figure(5)
+    imagesc(heatmapazlosliwa)
+    colorbar
+    title('heatmapa zlosliwa')
+    figure(6)
+    imagesc(heatmapalagodna)
+    colorbar
+    title('heatmapa lagodna')
 
-%% =========== Test sieci SOM - poprawność na danych Treningowych (błąd uczenia) =========      
-    [wt,kt]=size(zbiorTreningowy);  % w-wiersze; k-kolumny
-    liczbaZlosliwych=0;   % liczba zdiagnozowanych patologii
-    liczbaLagodnych=0;   % liczba zdiagnozowanych fizjologii
-    for i=1:wt   % iteracja po wektorach testujacych
-        d=zeros(liczbaWierszySiatki,liczbaKolumnSiatki);   % macierz wartości roznicy miedzy kazdym neuronem i wektorem testujacym
-        for j=1:liczbaWierszySiatki    % iteracja po neuronach-wiersze sieci
-            for l=1:liczbaKolumnSiatki    % iteracja po neuronach-kolumny sieci
+    wynik = heatmapazlosliwa > heatmapalagodna;
+    
+%% =========== Test sieci SOM - poprawność na danych Treningowych (błąd uczenia) =========  
+
+    [wt,~]=size(zbiorTreningowy);
+    liczbaZlosliwych=0;
+    liczbaLagodnych=0;
+    licznik = 0;
+    for i=1:wt
+        d=zeros(liczbaWierszySiatki,liczbaKolumnSiatki);
+        for j=1:liczbaWierszySiatki
+            for l=1:liczbaKolumnSiatki
                 d(j,l)=norm(zbiorTreningowy(i,1:5)-reshape(siatkaSOM(j,l,:),1,size(zbiorTreningowy(:,1:5),2)));
             end
         end
         [~,pomocnicza] = min(d(:));
         [I1,I2] = ind2sub(size(d),pomocnicza);
-        switch wybrano
-            case "l"
-                for z=1:size(klasyfikacja,1)
-                    if I1==klasyfikacja(z,1) && I2==klasyfikacja(z,2)
-                        liczbaLagodnych=liczbaLagodnych+1;
-                        if zbiorTestowy(i,6)==1
-                            licznik=licznik+1;
-                        end
-                    else
-                        liczbaZlosliwych=liczbaZlosliwych+1;
-                         if zbiorTestowy(i,6)==0
-                            licznik=licznik+1;
-                         end
-                    end
-                end
-                break
-                case "z"
-                for z=1:size(klasyfikacja,1)
-                    if I1==klasyfikacja(z,1) && I2==klasyfikacja(z,2)
-                        liczbaZlosliwych=liczbaZlosliwych+1;
-                        if zbiorTestowy(i,6)==0
-                            licznik=licznik+1;
-                        end
-                    else
-                        liczbaLagodnych=liczbaLagodnych+1;
-                         if zbiorTestowy(i,6)==1
-                            licznik=licznik+1;
-                         end
-                    end
-                end
-                break
+        if wynik(I1,I2) == 1 
+            liczbaZlosliwych = liczbaZlosliwych + 1;
+            if zbiorTreningowy(i,6) == 0
+                licznik = licznik + 1;
+            end
+        else
+            liczbaLagodnych = liczbaLagodnych + 1;
+            if zbiorTreningowy(i,6) == 1
+                licznik = licznik + 1;
+            end
         end
-                
     end
-    
-    blad(t) = licznik/wt; % obliczenie stosunku liczby błednie zdiagnozowanych zmian do wszystkich testów
+
+    blad(t) = licznik/wt *100;
     figure(2)
     hold on;
-    plot(t,blad(t)*100,'*b') % wykreślenie błędu
-    
+    plot(t,blad(t),'*b')
+
 end
+
 figure(2)
-yline(mean(blad)*100,'--k','wartość średnia');
-yline(min(blad)*100,'--b','wartość minimalna');
+yline(mean(blad),'--k','wartość średnia');
+yline(min(blad),'--b','wartość minimalna');
 
 %% =========== Wyniki procesu uczenia sieci SOM =========
 
-fprintf("Liczba zmian złośliwych w zbiorze treningowym: " + sum(zbiorTreningowy(:,6) == 1));
+fprintf('==== Wyniki procesu uczenia sieci SOM ====');
+fprintf("\nLiczba zmian złośliwych w zbiorze treningowym: " + sum(zbiorTreningowy(:,6) == 1));
 fprintf("\nLiczba zmian łagodynch w zbiorze treningowym: " + sum(zbiorTreningowy(:,6) == 0));
 fprintf("\nLiczba sklasyfikowanych zmian złośliwych w ostatniej iteracji: " + liczbaZlosliwych);
 fprintf("\nLiczba sklasyfikowanych zmian łagodynch w ostatniej iteracji: " + liczbaLagodnych);
-fprintf("\nBłąd klasyfikacji po " + iteracja + " iteracjach wynosi: " + blad(iteracja) + "\n");
+fprintf("\nBłąd klasyfikacji w procentach po " + iteracja + " iteracjach wynosi: " + blad(iteracja) + "\n");
 
-%% =========== Test sieci SOM - na danych nieznanych (błąd po uczeniu) =========      
-    liczniktest=0;
-    [wt,kt]=size(zbiorTestowy);  % w-wiersze; k-kolumny
-    liczbaZlosliwychtest=0;   % liczba zdiagnozowanych patologii
-    liczbaLagodnychtest=0;   % liczba zdiagnozowanych fizjologii
-    for i=1:wt   % iteracja po wektorach testujacych
-        d=zeros(liczbaWierszySiatki,liczbaKolumnSiatki);   % macierz wartości roznicy miedzy kazdym neuronem i wektorem testujacym
-        for j=1:liczbaWierszySiatki    % iteracja po neuronach-wiersze sieci
-            for l=1:liczbaKolumnSiatki    % iteracja po neuronach-kolumny sieci
-                d(j,l)=norm(zbiorTestowy(i,1:5)-reshape(siatkaSOM(j,l,:),1,size(zbiorTreningowy(:,1:5),2)));
-            end
+%% =========== Test sieci SOM - na danych nieznanych (błąd po uczeniu) =========   
+
+liczniktest=0;
+[wt,kt]=size(zbiorTestowy);
+liczbaZlosliwychtest=0;
+liczbaLagodnychtest=0;
+for i=1:wt
+    d=zeros(liczbaWierszySiatki,liczbaKolumnSiatki);
+    for j=1:liczbaWierszySiatki
+        for l=1:liczbaKolumnSiatki
+            d(j,l)=norm(zbiorTestowy(i,1:5)-reshape(siatkaSOM(j,l,:),1,size(zbiorTestowy(:,1:5),2)));
         end
-        [~,pomocnicza] = min(d(:));
-        [I1,I2] = ind2sub(size(d),pomocnicza);
-        switch wybrano
-            case "l"
-                for z=1:size(klasyfikacja,1)
-                    if I1==klasyfikacja(z,1) && I2==klasyfikacja(z,2)
-                        liczbaLagodnychtest=liczbaLagodnychtest+1;
-                        if zbiorTestowy(i,6)==1
-                            liczniktest=liczniktest+1;
-                        end
-                    else
-                        liczbaZlosliwychtest=liczbaZlosliwychtest+1;
-                         if zbiorTestowy(i,6)==0
-                            liczniktest=liczniktest+1;
-                         end
-                    end
-                end
-                case "z"
-                for z=1:size(klasyfikacja,1)
-                    if I1==klasyfikacja(z,1) && I2==klasyfikacja(z,2)
-                        liczbaZlosliwychtest=liczbaZlosliwychtest+1;
-                        if zbiorTestowy(i,6)==0
-                            liczniktest=liczniktest+1;
-                        end
-                    else
-                        liczbaLagodnychtest=liczbaLagodnychtest+1;
-                         if zbiorTestowy(i,6)==1
-                            liczniktest=liczniktest+1;
-                         end
-                    end
-                end
-        end
-                
     end
-    
-    bladtest = liczniktest/wt; % obliczenie stosunku liczby błednie zdiagnozowanych zmian do wszystkich testów
-    
+    [~,pomocnicza] = min(d(:));
+    [I1,I2] = ind2sub(size(d),pomocnicza);
+    if wynik(I1,I2) == 1 
+        liczbaZlosliwychtest = liczbaZlosliwychtest + 1;
+        if zbiorTestowy(i,6) == 0
+            liczniktest = liczniktest + 1;
+        end
+    else
+        liczbaLagodnychtest = liczbaLagodnychtest + 1;
+        if zbiorTestowy(i,6) == 1
+            liczniktest = liczniktest + 1;
+        end
+    end
+end
 
+bladtest = liczniktest/wt * 100;
 
 %% =========== Wyniki testu nauczenia sieci SOM =========
 
-fprintf("Liczba zmian złośliwych w zbiorze testującym: " + sum(zbiorTestowy(:,6) == 1));
+fprintf('\n==== Wyniki testu nauczenia sieci SOM ====');
+fprintf("\nLiczba zmian złośliwych w zbiorze testującym: " + sum(zbiorTestowy(:,6) == 1));
 fprintf("\nLiczba zmian łagodynch w zbiorze testującym: " + sum(zbiorTestowy(:,6) == 0));
 fprintf("\nLiczba wszystkich wykrytych zmian złośliwych: " + liczbaZlosliwychtest);
 fprintf("\nLiczba wszystkich wykrytych zmian łagodnych: " + liczbaLagodnychtest);
-fprintf("\nBłąd klasyfikacji ogółem w %:"+bladtest*100);
+fprintf("\nBłąd klasyfikacji ogółem w procentach: " + bladtest + "\n");
+
+%% =========== TODO ===========
+
+% kwestia znalezienia rejonu z obliczonej heatmapy
+
+% zmiana uzupelniania wartosci niekompletnych
 
 % tutaj trzeba okreslic czulosc/specyficznosc, jeszcze wypisac jakie byly
 % wspolczynniki lagodne/zlosliwe, ktore byly potrzebne do klasyfikacji (w
