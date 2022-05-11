@@ -8,8 +8,8 @@ clear;
 clc;
 close all;
 format long
-%ustawienie ziarna generatora liczb losowych
-rng(1) %<-- tu wartość nie ma znaczenia, ważne żeby testować przy tej samej
+rng(1) % ustawienie ziarna generatora liczb losowych
+
 %% ========= Wczytanie danych =========
 
 % Dane wczytane są w kolejnych kolumnach:
@@ -30,7 +30,6 @@ for i=1:5
     M(any(ismissing(M(:,i)),2),i)=median(M(:,i),'omitnan');
 end
 
-
 % Pierwszy wektor cech (BI-RADS):
 Cond1 = M(:,1) > 5;
 Cond2 = M(:,1) < 1; 
@@ -46,13 +45,13 @@ Cond1 = M(:,4) > 5;
 Cond2 = M(:,4) < 1; 
 Condition3 = Cond1 | Cond2; 
 
-% Trzeci wektor cech (Gęstość):
+% Piąty wektor cech (Gęstość):
 Cond1 = M(:,5) > 4;
 Cond2 = M(:,5) < 1; 
 Condition4 = Cond1 | Cond2; 
 
 Conditions = Condition1 | Condition2 | Condition3 | Condition4;
-M(Conditions,:) = []; 
+M(Conditions,:) = []; % usunięcie elementów spoza zakresu
 size2 = size(M,1); % wielkość macierzy po redukcji błędnych wektorów
 numOfDeletedRows = size1 - size2; % ilość danych, które zostały usunięte
 
@@ -74,30 +73,29 @@ Benign = M(benign,:); % zbiór cech dla przypadku nowotworu łagodnego
 
 %% ========= Podział danych na zbiór uczący i zbior testowy =========
 
-zbiorTestowy = [Malignant(1:uint64(size(Malignant,1)/2),:) ; Benign(1:uint64(size(Benign,1)/2),:)]; % dane zbiorTestowyowe
+zbiorTestowy = [Malignant(1:uint64(size(Malignant,1)/2),:) ; Benign(1:uint64(size(Benign,1)/2),:)]; % dane testowe
 zbiorTreningowy = [Malignant(uint64(size(Malignant,1)/2)+1:size(Malignant,1),:) ; Benign(uint64(size(Benign,1)/2)+1:size(Benign,1),:)]; % dane uczące
 
 %% ========= Implementacja sieci SOM =========
 
-%ustalanie rozmiarów sieci
+% ustalanie rozmiarów sieci
 liczbaWierszySiatki = 6;
 liczbaKolumnSiatki = 6;
 
-iteracja = 100; % Odgórny limit iteracji potrzebny do zbieżności
+iteracja = 100; % odgórny limit iteracji potrzebny do zbieżności
 
 %% =========== Ustawienie parametrów dla SOM =========
-% Początkowy topologiczny rozmiar sąsiedztwa zwycięskiego neuronu
-poczatkowyRozmiarSasiedztwa = 2;
+
+poczatkowyRozmiarSasiedztwa = 2; % Początkowy topologiczny rozmiar sąsiedztwa zwycięskiego neuronu
 
 % Stała czasowa początkowego rozmiaru sąsiedztwa topologicznego
 stalaCzasowa = iteracja/log(poczatkowyRozmiarSasiedztwa);
 
-% Początkowa szybkość uczenia się zmienna w czasie
-poczatkowyWspolczynnikUczenia = 1;
+poczatkowyWspolczynnikUczenia = 1; % Początkowa szybkość uczenia się zmienna w czasie
 
 wspolczynnikNauki = iteracja; % Stała czasowa dla zmiennej w czasie szybkości uczenia się
 
-mapaSOM = inicjalizacjaWag(liczbaWierszySiatki,liczbaKolumnSiatki,size(zbiorTreningowy(:,1:5),2));
+siatkaSOM = inicjalizacjaWag(liczbaWierszySiatki,liczbaKolumnSiatki,size(zbiorTreningowy(:,1:5),2));
 
 blad = zeros(iteracja,1); % wektor przechowujący obliczony błąd
 
@@ -107,11 +105,11 @@ for t = 1:iteracja
     szerokosc = poczatkowyRozmiarSasiedztwa*exp(-t/stalaCzasowa);
     wariancjaSzerokosci = szerokosc^2;
     wskaznikNauki = poczatkowyWspolczynnikUczenia*exp(-t/wspolczynnikNauki);
-    if wskaznikNauki <0.02 % jeśli współczynnik jest bardzo mały ustaw stałą aprobowalną wielkość
-            wskaznikNauki = 0.1;
+    if wskaznikNauki <0.01 
+            wskaznikNauki = 0.1; % jeśli współczynnik jest bardzo mały ustaw stałą aprobowalną wielkość
     end
 
-    [obliczonyDystans, indeks] = najbizszyDystans(zbiorTreningowy(:,1:5), mapaSOM, liczbaWierszySiatki, ...
+    [obliczonyDystans, indeks] = najbizszyDystans(zbiorTreningowy(:,1:5), siatkaSOM, liczbaWierszySiatki, ...
                                             liczbaKolumnSiatki,size(zbiorTreningowy(:,1:5),1), size(zbiorTreningowy(:,1:5),2));
     [~,pomocnicza] = min(obliczonyDystans(:));
     [wygranyRzad,wygranaKolumna] = ind2sub(size(obliczonyDystans),pomocnicza);
@@ -120,13 +118,13 @@ for t = 1:iteracja
     otoczenie = obliczNajblizszegoSasiada(liczbaWierszySiatki, liczbaKolumnSiatki, wygranyRzad, ...
                                             wygranaKolumna, wariancjaSzerokosci);
     % aktualizacja mapy
-    mapaSOM = aktualizacjaWag(zbiorTreningowy(:,1:5), mapaSOM, liczbaWierszySiatki, liczbaKolumnSiatki, ...
+    siatkaSOM = aktualizacjaWag(zbiorTreningowy(:,1:5), siatkaSOM, liczbaWierszySiatki, liczbaKolumnSiatki, ...
                                 size(zbiorTreningowy(:,1:5),2), indeks, wskaznikNauki, otoczenie);
     
-    % Wektor wagowy neuronu
-    wektorWag = zeros(liczbaWierszySiatki*liczbaKolumnSiatki, size(zbiorTreningowy(:,1:5),2));
-    % Macierz SOM do rysowania
-    macierz = zeros(liczbaWierszySiatki*liczbaKolumnSiatki,1);
+    
+    wektorWag = zeros(liczbaWierszySiatki*liczbaKolumnSiatki, size(zbiorTreningowy(:,1:5),2)); % Wektor wagowy neuronu
+    
+    macierz = zeros(liczbaWierszySiatki*liczbaKolumnSiatki,1); % Macierz SOM do rysowania
  
     pomocnicza = 1; % zmienna pomocnicza w operacjach z wagami
 
@@ -135,11 +133,10 @@ for t = 1:iteracja
 %     figure(1);
 %     title('Mapa SOM - na podstawie wektorów wag')
 %     hold on;
-
-    % Pobierz wektor wagowy neuronu
+    
     for r = 1:liczbaWierszySiatki
         for c = 1:liczbaKolumnSiatki      
-            wektorWag(pomocnicza,:) = reshape(mapaSOM(r,c,:),1,size(zbiorTreningowy(:,1:5),2));
+            wektorWag(pomocnicza,:) = reshape(siatkaSOM(r,c,:),1,size(zbiorTreningowy(:,1:5),2)); % Pobierz wektor wagowy neuronu
             pomocnicza = pomocnicza + 1;
         end
     end
@@ -159,6 +156,7 @@ for t = 1:iteracja
 %         macierz(2*r-1,1) = plot(wektorWag(wiersz1:wiersz2,1),wektorWag(wiersz1:wiersz2,2),'--ro','LineWidth',2,'MarkerEdgeColor','g','MarkerFaceColor','g','MarkerSize',4);
 %         macierz(2*r,1) = plot(wektorWag(r:liczbaKolumnSiatki:kolumna,1),wektorWag(r:liczbaKolumnSiatki:kolumna,2),'--ro','LineWidth',2,'MarkerEdgeColor','g','MarkerFaceColor','g','MarkerSize',4);
 %     end
+
 %% =========== Kalibracja sieci SOM v1 =========    
 % Wczytanie danych
 MalignantMean = sum(Malignant(uint64(size(Malignant,1)/2)+1:size(Malignant,1),1:5))/216; %średni wektor danych patologicznych
@@ -167,8 +165,8 @@ f=1;
 p=1;
 for j=1:liczbaWierszySiatki %iteracja po neuronach-wiersze sieci
  for l=1:liczbaKolumnSiatki %iteracja po neuronach-kolumny sieci
- d_pato = norm(MalignantMean-reshape(mapaSOM(j,l,:),1,size(zbiorTreningowy(:,1:5),2)));
- d_fizjo = norm(BenignMean-reshape(mapaSOM(j,l,:),1,size(zbiorTreningowy(:,1:5),2)));
+ d_pato = norm(MalignantMean-reshape(siatkaSOM(j,l,:),1,size(zbiorTreningowy(:,1:5),2)));
+ d_fizjo = norm(BenignMean-reshape(siatkaSOM(j,l,:),1,size(zbiorTreningowy(:,1:5),2)));
  if d_pato >= d_fizjo
     wsp_fizjo(f,:) = [j,l];
     f = f+1;
@@ -186,7 +184,7 @@ for w=1:wt
     d_test = zeros(liczbaWierszySiatki,liczbaKolumnSiatki);
  for j = 1:liczbaWierszySiatki
  for l = 1:liczbaKolumnSiatki
- d_test(j,l)=norm(zbiorTestowy(w,1:5)-reshape(mapaSOM(j,l,:),1,size(zbiorTreningowy(:,1:5),2)));
+ d_test(j,l)=norm(zbiorTestowy(w,1:5)-reshape(siatkaSOM(j,l,:),1,size(zbiorTreningowy(:,1:5),2)));
  end
  end
  [~,pomocnicza] = min(d_test(:));
@@ -204,6 +202,7 @@ wektorwynikow(t,:)=[iteracja,lp,lf];
 % for i=1:13
 % sredniwynik(i,:)=[a(i),mean(wektorwynikow((i-1)*10+1:i*10,2)),mean(wektorwynikow((i-1)*10+1:i*10,3))];
 % end
+
 %% =========== Kalibracja sieci SOM v2 =========  
     kalibracja=[Malignant(1:uint64(size(Malignant,1)/2),1:5) ; Benign(1:uint64(size(Benign,1)/2),1:5)];
     wspolrzedne=[0 0 ; 0 0]; % inicjalizacja wektora przechowującego współrzędne wyznaczonych neuronów
@@ -213,7 +212,7 @@ wektorwynikow(t,:)=[iteracja,lp,lf];
         d=zeros(liczbaWierszySiatki,liczbaKolumnSiatki); % macierz wartości roznicy miedzy kazdym neuronem i wektorem kalibrującym
         for j=1:liczbaWierszySiatki    % iteracja po neuronach-wiersze sieci
             for l=1:liczbaKolumnSiatki    % iteracja po neuronach-kolumny sieci
-                d(j,l)=norm(kalibracja(i)-reshape(mapaSOM(j,l,:),1,size(zbiorTreningowy(:,1:5),2)));
+                d(j,l)=norm(kalibracja(i)-reshape(siatkaSOM(j,l,:),1,size(zbiorTreningowy(:,1:5),2)));
                 [M,I1]=min(d);
                 [M,I2]=min(M);
                 wspolrzedne(i,:)=[I1(I2),I2];
@@ -225,6 +224,7 @@ wektorwynikow(t,:)=[iteracja,lp,lf];
         [M,I2]=min(M);  % I2-nr. kolumny sieci; I1(I2)-nr.wiersza
         wspolrzedne(i,:)=[I1(I2),I2];
     end
+
 %% =========== Test sieci SOM v2 =========      
     [wt,kt]=size(zbiorTestowy);  % w-wiersze; k-kolumny
     liczbaZlosliwych=0;   % liczba zdiagnozowanych patologii
@@ -233,7 +233,7 @@ wektorwynikow(t,:)=[iteracja,lp,lf];
         d=zeros(liczbaWierszySiatki,liczbaKolumnSiatki);   % macierz wartości roznicy miedzy kazdym neuronem i wektorem testujacym
         for j=1:liczbaWierszySiatki    % iteracja po neuronach-wiersze sieci
             for l=1:liczbaKolumnSiatki    % iteracja po neuronach-kolumny sieci
-                d(j,l)=norm(zbiorTestowy(i,1:5)-reshape(mapaSOM(j,l,:),1,size(zbiorTreningowy(:,1:5),2)));
+                d(j,l)=norm(zbiorTestowy(i,1:5)-reshape(siatkaSOM(j,l,:),1,size(zbiorTreningowy(:,1:5),2)));
             end
         end
         [M,I1]=min(d);
@@ -263,6 +263,8 @@ wektorwynikow(t,:)=[iteracja,lp,lf];
 end
 figure(2)
 yline(mean(blad),'--k','wartość średnia');
+
+
 %% =========== Wyniki procesu uczenia sieci SOM =========
 
 fprintf("Liczba zmian złośliwych w zbiorze testującym: " + sum(zbiorTestowy(:,6) == 1));
