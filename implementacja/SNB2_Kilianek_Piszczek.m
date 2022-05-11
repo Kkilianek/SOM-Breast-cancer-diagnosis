@@ -93,7 +93,13 @@ poczatkowyWspolczynnikUczenia = 1; % Początkowa szybkość uczenia się zmienna
 
 wspolczynnikNauki = iteracja; % Stała czasowa dla zmiennej w czasie szybkości uczenia się
 
-siatkaSOM = inicjalizacjaWag(liczbaWierszySiatki,liczbaKolumnSiatki,size(zbiorTreningowy(:,1:5),2));
+siatkaSOM = zeros(liczbaWierszySiatki,liczbaKolumnSiatki,5); % prealokacja
+
+    for i = 1:liczbaWierszySiatki
+        for j = 1:liczbaKolumnSiatki
+            siatkaSOM(i,j,:) = rand(1,5); % wylosowanie kolejno wektorów wag
+        end
+    end
 
 blad = zeros(iteracja,1); % wektor przechowujący obliczony błąd w trakcie uczenia sieci
 
@@ -202,18 +208,9 @@ for t = 1:iteracja
         end
     end
 
-%     figure(2)
-%     imagesc(heatmapazlosliwa)
-%     colorbar
-%     title('heatmapa zlosliwa')
-%     figure(3)
-%     imagesc(heatmapalagodna)
-%     colorbar
-%     title('heatmapa lagodna')
-
     % obliczenie końcowych wyników (najczęściej zapalanych neuronów względem klasy złośliwej)
     wynik = heatmapazlosliwa > heatmapalagodna;
-    wynik = medfilt2(wynik,'symmetric');
+    wynik = medfilt2(wynik,'symmetric'); % <- tutaj musimy się zdecydować czy to robimy czy nie
     figure(4)
     imagesc(wynik)
     title('Mapa zapalanych neuronów łagodna/złośliwa klasyfikacja')
@@ -248,15 +245,12 @@ for t = 1:iteracja
     end
 
     blad(t) = licznik/wt *100; % obliczenie błedu 
-    figure(1)
-    hold on;
-    plot(t,blad(t),'*b')
 
 end
 
 figure(1)
-yline(mean(blad),'--k','wartość średnia');
-yline(min(blad),'--b','wartość minimalna');
+plot(blad,'--*b')
+yline(min(blad),'-k','wartość minimalna');
 
 %% =========== Wyniki procesu uczenia sieci SOM =========
 
@@ -329,6 +323,4 @@ fprintf("\nSpecyficzność: " + specyficznosc + "\n");
 % sprawdzic czy na pewno dobrze aktualizujemy wagi i przeprowadzamy proces
 % uczenia
 
-% sprawdzic czy dobrze liczymy blad
-
-% moze rysowanie bledu po petlach, zeby przyspieszyc proces uczenia?
+% decyzja czy uzywamy filtru medianowego czy nie
