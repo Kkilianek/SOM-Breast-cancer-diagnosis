@@ -1,10 +1,12 @@
-function wektorWag = inicjalizacjaWag(liczbaWierszy,liczbaKolumn, iloscDanych)
-% Opis funkcji...
+function macierzWag = inicjalizacjaWag(liczbaWierszy,liczbaKolumn, iloscDanych)
+% Funkcja odpowiedzialna za inicjalizowanie wag (wywoływana tylko raz, przed
+% procesem uczenia) 
 
-    wektorWag = zeros(liczbaWierszy,liczbaKolumn,iloscDanych);
+    macierzWag = zeros(liczbaWierszy,liczbaKolumn,iloscDanych); % prealokacja
+
     for i = 1:liczbaWierszy
         for j = 1:liczbaKolumn
-            wektorWag(i,j,:) = rand(1,iloscDanych);
+            macierzWag(i,j,:) = rand(1,iloscDanych); % wylosowanie kolejno wektorów wag
         end
     end
 end

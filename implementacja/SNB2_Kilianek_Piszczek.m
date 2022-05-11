@@ -23,11 +23,6 @@ end
 size1 = size(M,1); % zapisanie ilości wektorów cech przed preprocessingiem
 M = table2array(M); % zamiana na dane numeryczne
 
-%zastąpienie brakujących wartości parametrem statystycznym
-for i=1:5
-    M(any(ismissing(M(:,i)),2),i)=median(M(:,i),'omitnan');
-end
-
 % Pierwszy wektor cech (BI-RADS):
 Cond1 = M(:,1) > 5;
 Cond2 = M(:,1) < 1; 
@@ -69,6 +64,14 @@ benign = M(:,6) == 0;
 Malignant = M(malignant,:); % zbiór cech dla przypadku nowotworu złośliwego
 Benign = M(benign,:); % zbiór cech dla przypadku nowotworu łagodnego
 
+%% ========= Preprocessing danych (etap 4 - uzupełnienie niekompletnych danych) =========
+
+%zastąpienie brakujących wartości parametrem statystycznym
+for i=1:5
+    Malignant(any(ismissing(Malignant(:,i)),2),i)=median(Malignant(:,i),'omitnan');
+    Benign(any(ismissing(Benign(:,i)),2),i)=median(Benign(:,i),'omitnan');
+end
+
 %% ========= Podział danych na zbiór uczący i zbior testowy =========
 
 zbiorTestowy = [Malignant(1:uint64(size(Malignant,1)/2),:) ; Benign(1:uint64(size(Benign,1)/2),:)]; % dane testowe
@@ -101,7 +104,7 @@ for t = 1:iteracja
     wariancjaSzerokosci = szerokosc^2;
     wskaznikNauki = poczatkowyWspolczynnikUczenia*exp(-t/wspolczynnikNauki);
     if wskaznikNauki < 0.01 
-            wskaznikNauki = 0.1; % jeśli współczynnik jest bardzo mały ustaw stałą aprobowalną wielkość
+            wskaznikNauki = 0.1; % jeśli współczynnik jest bardzo mały ustaw stałą aprobowalną wartość
     end
 
     [obliczonyDystans, indeks] = najbizszyDystans(zbiorTreningowy(:,1:5), siatkaSOM, liczbaWierszySiatki, ...
@@ -112,16 +115,14 @@ for t = 1:iteracja
     % ustalenie sasiedztwa neuronów
     otoczenie = obliczNajblizszegoSasiada(liczbaWierszySiatki, liczbaKolumnSiatki, wygranyRzad, ...
                                             wygranaKolumna, wariancjaSzerokosci);
-    % aktualizacja mapy
+    % aktualizacja siatki SOM
     siatkaSOM = aktualizacjaWag(zbiorTreningowy(:,1:5), siatkaSOM, liczbaWierszySiatki, liczbaKolumnSiatki, ...
                                 size(zbiorTreningowy(:,1:5),2), indeks, wskaznikNauki, otoczenie);
     
     
-    wektorWag = zeros(liczbaWierszySiatki*liczbaKolumnSiatki, size(zbiorTreningowy(:,1:5),2)); % Wektor wagowy neuronu
-    
-    macierz = zeros(liczbaWierszySiatki*liczbaKolumnSiatki,1); % Macierz SOM do rysowania
+    wektorWag = zeros(liczbaWierszySiatki*liczbaKolumnSiatki, size(zbiorTreningowy(:,1:5),2)); % prealokacja wektoru wag
  
-    pomocnicza = 1; % zmienna pomocnicza w operacjach z wagami
+    pomocnicza = 1; % zmienna pomocnicza podczas liczenia wag
     
     for r = 1:liczbaWierszySiatki
         for c = 1:liczbaKolumnSiatki      
@@ -153,6 +154,7 @@ for t = 1:iteracja
         end
     end
 
+    % ustalenie najczęściej zapalanych neuronów
     wspolrzednezlosliwe=unique(wspolrzedne(1:216,:),'rows');
     wspolrzednelagodne=unique(wspolrzedne(217:end,:),'rows');
     iloscz=zeros(size(wspolrzednezlosliwe,1),1);
@@ -174,6 +176,7 @@ for t = 1:iteracja
         end
     end
 
+    % stworzenie heatmapy najczęściej zapalanych neuronów
     podsumz=[wspolrzednezlosliwe,iloscz];
     podsuml=[wspolrzednelagodne,iloscl];
     heatmapazlosliwa = zeros(liczbaWierszySiatki,liczbaKolumnSiatki);
@@ -208,6 +211,7 @@ for t = 1:iteracja
 %     colorbar
 %     title('heatmapa lagodna')
 
+    % obliczenie końcowych wyników (najczęściej zapalanych neuronów względem klasy złośliwej)
     wynik = heatmapazlosliwa > heatmapalagodna;
     wynik = medfilt2(wynik,'symmetric');
     figure(4)
@@ -224,6 +228,7 @@ for t = 1:iteracja
         d=zeros(liczbaWierszySiatki,liczbaKolumnSiatki);
         for j=1:liczbaWierszySiatki
             for l=1:liczbaKolumnSiatki
+                % obliczenie odległości wektora cech od wektora sieci
                 d(j,l)=norm(zbiorTreningowy(i,1:5)-reshape(siatkaSOM(j,l,:),1,size(zbiorTreningowy(:,1:5),2)));
             end
         end
@@ -242,7 +247,7 @@ for t = 1:iteracja
         end
     end
 
-    blad(t) = licznik/wt *100;
+    blad(t) = licznik/wt *100; % obliczenie błedu 
     figure(1)
     hold on;
     plot(t,blad(t),'*b')
@@ -268,6 +273,10 @@ liczniktest=0;
 [wt,kt]=size(zbiorTestowy);
 liczbaZlosliwychtest=0;
 liczbaLagodnychtest=0;
+prawdziwiedodatni=0;
+prawdziwieujemny=0;
+falszywiedodatni=0;
+falszywieujemny=0;
 for i=1:wt
     d=zeros(liczbaWierszySiatki,liczbaKolumnSiatki);
     for j=1:liczbaWierszySiatki
@@ -280,12 +289,18 @@ for i=1:wt
     if wynik(I1,I2) == 1 
         liczbaZlosliwychtest = liczbaZlosliwychtest + 1;
         if zbiorTestowy(i,6) == 0
+            prawdziwieujemny = prawdziwieujemny + 1;
             liczniktest = liczniktest + 1;
+        else
+            prawdziwiedodatni = prawdziwiedodatni + 1;
         end
     else
         liczbaLagodnychtest = liczbaLagodnychtest + 1;
         if zbiorTestowy(i,6) == 1
             liczniktest = liczniktest + 1;
+            falszywieujemny = falszywieujemny + 1;
+        else
+            falszywiedodatni = falszywiedodatni + 1;
         end
     end
 end
@@ -301,12 +316,19 @@ fprintf("\nLiczba wszystkich wykrytych zmian złośliwych: " + liczbaZlosliwycht
 fprintf("\nLiczba wszystkich wykrytych zmian łagodnych: " + liczbaLagodnychtest);
 fprintf("\nBłąd klasyfikacji ogółem w procentach: " + bladtest + "\n");
 
+%% =========== Czułość i specyficzność sieci SOM =========
+
+czulosc = prawdziwiedodatni / (prawdziwiedodatni + falszywieujemny);
+specyficznosc = prawdziwieujemny / (prawdziwieujemny + falszywiedodatni);
+fprintf('\n==== Czułość i specyficzność sieci SOM ====');
+fprintf("\nCzułość: " + czulosc);
+fprintf("\nSpecyficzność: " + specyficznosc + "\n");
+
 %% =========== TODO ===========
 
-% kwestia znalezienia rejonu z obliczonej heatmapy
+% sprawdzic czy na pewno dobrze aktualizujemy wagi i przeprowadzamy proces
+% uczenia
 
-% zmiana uzupelniania wartosci niekompletnych
+% sprawdzic czy dobrze liczymy blad
 
-% tutaj trzeba okreslic czulosc/specyficznosc, jeszcze wypisac jakie byly
-% wspolczynniki lagodne/zlosliwe, ktore byly potrzebne do klasyfikacji (w
-% sensie jakie progi decyzyjne uzylismy)
+% moze rysowanie bledu po petlach, zeby przyspieszyc proces uczenia?
