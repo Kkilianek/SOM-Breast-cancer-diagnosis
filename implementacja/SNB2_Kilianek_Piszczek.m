@@ -157,47 +157,44 @@ for t = 1:iteracja
 %         macierz(2*r,1) = plot(wektorWag(r:liczbaKolumnSiatki:kolumna,1),wektorWag(r:liczbaKolumnSiatki:kolumna,2),'--ro','LineWidth',2,'MarkerEdgeColor','g','MarkerFaceColor','g','MarkerSize',4);
 %     end
 
-%% =========== Kalibracja sieci SOM v2 =========  
-    wspolrzedne=[0 0 ; 0 0]; % inicjalizacja wektora przechowującego współrzędne wyznaczonych neuronów
-    figure(3)
-    hold on
+%% =========== Kalibracja sieci SOM =========  
+    wspolrzedne=zeros(size(zbiorTreningowy,1),2); % inicjalizacja wektora przechowującego współrzędne wyznaczonych neuronów
+    
     d=zeros(liczbaWierszySiatki,liczbaKolumnSiatki); % macierz wartości roznicy miedzy kazdym neuronem i wektorem kalibrującym
-    i = 1;
-    for j=1:liczbaWierszySiatki    % iteracja po neuronach-wiersze sieci
-        for l=1:liczbaKolumnSiatki    % iteracja po neuronach-kolumny sieci
-           d(j,l)=norm(zbiorTreningowy(i,1:5)-reshape(siatkaSOM(j,l,:),1,size(zbiorTreningowy(:,1:5),2)));
-           [M,I1]=min(d);
-           [C,I2]=min(M);
-           wspolrzedne(i,:)=[I1(I2),I2];
-           plot(wspolrzedne(1,1),wspolrzedne(1,2),'*r')
-           plot(wspolrzedne(2,1),wspolrzedne(2,2),'*b')
-           i = i + 1;
-        end
-     end
-     [M,I1]=min(d);
-     [D,I2]=min(M);  % I2-nr. kolumny sieci; I1(I2)-nr.wiersza
-     wspolrzedne(i,:)=[I1(I2),I2];
+    % 1-216 złośliwe
+    % 217-471 łagodne
 
-%% =========== Test sieci SOM v2 =========      
-    [wt,kt]=size(zbiorTestowy);  % w-wiersze; k-kolumny
+    for i=1:size(zbiorTreningowy,1)
+        for j=1:liczbaWierszySiatki
+            for l=1:liczbaKolumnSiatki
+               d(j,l)=norm(zbiorTreningowy(i,1:5)-reshape(siatkaSOM(j,l,:),1,size(zbiorTreningowy(:,1:5),2)));
+               [~,pomocnicza] = min(d(:));
+               [I1,I2] = ind2sub(size(obliczonyDystans),pomocnicza);
+               wspolrzedne(i,:)=[I1,I2];     
+            end
+        end
+    end
+
+%% =========== Test sieci SOM =========      
+    [wt,kt]=size(zbiorTreningowy);  % w-wiersze; k-kolumny
     liczbaZlosliwych=0;   % liczba zdiagnozowanych patologii
     liczbaLagodnych=0;   % liczba zdiagnozowanych fizjologii
     for i=1:wt   % iteracja po wektorach testujacych
         d=zeros(liczbaWierszySiatki,liczbaKolumnSiatki);   % macierz wartości roznicy miedzy kazdym neuronem i wektorem testujacym
         for j=1:liczbaWierszySiatki    % iteracja po neuronach-wiersze sieci
             for l=1:liczbaKolumnSiatki    % iteracja po neuronach-kolumny sieci
-                d(j,l)=norm(zbiorTestowy(i,1:5)-reshape(siatkaSOM(j,l,:),1,size(zbiorTreningowy(:,1:5),2)));
+                d(j,l)=norm(zbiorTreningowy(i,1:5)-reshape(siatkaSOM(j,l,:),1,size(zbiorTreningowy(:,1:5),2)));
             end
         end
         [M,I1]=min(d);
         [M,I2]=min(M); % I2-nr. kolumny sieci; I1(I2)-nr.wiersza
         if I1(I2)>=wspolrzedne(2,1) && I2>=wspolrzedne(2,2)
             liczbaLagodnych=liczbaLagodnych+1;
-            if zbiorTestowy(wt,6) == 1
+            if zbiorTreningowy(wt,6) == 1
                 licznik = licznik + 1;
             end
         else
-            if zbiorTestowy(wt,6) == 0
+            if zbiorTreningowy(wt,6) == 0
                 licznik = licznik + 1;
             end
             liczbaZlosliwych=liczbaZlosliwych+1;
@@ -231,6 +228,3 @@ fprintf("\nBłąd klasyfikacji po " + iteracja + " iteracjach wynosi: " + blad(i
 % tutaj trzeba okreslic czulosc/specyficznosc, jeszcze wypisac jakie byly
 % wspolczynniki lagodne/zlosliwe, ktore byly potrzebne do klasyfikacji (w
 % sensie jakie progi decyzyjne uzylismy)
-
-figure(3)
-legend('złośliwe','łagodne')
