@@ -125,7 +125,6 @@ for t = 1:iteracja
     siatkaSOM = aktualizacjaWag(zbiorTreningowy(:,1:5), siatkaSOM, liczbaWierszySiatki, liczbaKolumnSiatki, ...
                                 size(zbiorTreningowy(:,1:5),2), indeks, wskaznikNauki, otoczenie);
     
-    
     wektorWag = zeros(liczbaWierszySiatki*liczbaKolumnSiatki, size(zbiorTreningowy(:,1:5),2)); % prealokacja wektoru wag
  
     pomocnicza = 1; % zmienna pomocnicza podczas liczenia wag
@@ -136,18 +135,10 @@ for t = 1:iteracja
             pomocnicza = pomocnicza + 1;
         end
     end
-    
-    figure(1)
-    title('Proces uczenia sieci (przebieg błędu w zależności od liczby iteracji)')
-    hold on;
-    xlabel('iteracja')
-    ylabel('błąd klasyfikacji [w %]')
 
     % Kalibracja sieci SOM
     wspolrzedne=zeros(size(zbiorTreningowy,1),2); % inicjalizacja wektora przechowującego współrzędne wyznaczonych neuronów 
     d=zeros(liczbaWierszySiatki,liczbaKolumnSiatki); % macierz wartości roznicy miedzy kazdym neuronem i wektorem kalibrującym
-    % 1-216 złośliwe
-    % 217-471 łagodne
 
     for i=1:size(zbiorTreningowy,1)
         for j=1:liczbaWierszySiatki
@@ -211,22 +202,18 @@ for t = 1:iteracja
     % obliczenie końcowych wyników (najczęściej zapalanych neuronów względem klasy złośliwej)
     wynik = heatmapazlosliwa > heatmapalagodna;
     wynik = medfilt2(wynik,'symmetric'); % <- tutaj musimy się zdecydować czy to robimy czy nie
-    figure(4)
-    imagesc(wynik)
-    title('Mapa zapalanych neuronów łagodna/złośliwa klasyfikacja')
-    
     
     % Test sieci SOM - poprawność na danych Treningowych (błąd uczenia)
-    [wt,~]=size(zbiorTreningowy);
-    liczbaZlosliwych=0;
-    liczbaLagodnych=0;
+    [wt,~] = size(zbiorTreningowy);
+    liczbaZlosliwych = 0;
+    liczbaLagodnych = 0;
     licznik = 0;
-    for i=1:wt
-        d=zeros(liczbaWierszySiatki,liczbaKolumnSiatki);
-        for j=1:liczbaWierszySiatki
-            for l=1:liczbaKolumnSiatki
+    for i = 1:wt
+        d = zeros(liczbaWierszySiatki,liczbaKolumnSiatki);
+        for j = 1:liczbaWierszySiatki
+            for l = 1:liczbaKolumnSiatki
                 % obliczenie odległości wektora cech od wektora sieci
-                d(j,l)=norm(zbiorTreningowy(i,1:5)-reshape(siatkaSOM(j,l,:),1,size(zbiorTreningowy(:,1:5),2)));
+                d(j,l) = norm(zbiorTreningowy(i,1:5)-reshape(siatkaSOM(j,l,:),1,size(zbiorTreningowy(:,1:5),2)));
             end
         end
         [~,pomocnicza] = min(d(:));
@@ -245,12 +232,20 @@ for t = 1:iteracja
     end
 
     blad(t) = licznik/wt *100; % obliczenie błedu 
-
+    fprintf("Iteracja: " + t + "\n");
 end
 
 figure(1)
+title('Proces uczenia sieci (przebieg błędu w zależności od liczby iteracji)')
+hold on;
+xlabel('iteracja')
+ylabel('błąd klasyfikacji [w %]')
 plot(blad,'--*b')
 yline(min(blad),'-k','wartość minimalna');
+
+figure(2)
+imagesc(wynik)
+title('Mapa zapalanych neuronów łagodna/złośliwa klasyfikacja')
 
 %% =========== Wyniki procesu uczenia sieci SOM =========
 
@@ -263,14 +258,14 @@ fprintf("\nBłąd klasyfikacji w procentach po " + iteracja + " iteracjach wynos
 
 %% =========== Test sieci SOM - na danych nieznanych (błąd po uczeniu) =========   
 
-liczniktest=0;
-[wt,kt]=size(zbiorTestowy);
-liczbaZlosliwychtest=0;
-liczbaLagodnychtest=0;
-prawdziwiedodatni=0;
-prawdziwieujemny=0;
-falszywiedodatni=0;
-falszywieujemny=0;
+liczniktest = 0;
+[wt,kt] = size(zbiorTestowy);
+liczbaZlosliwychtest = 0;
+liczbaLagodnychtest = 0;
+prawdziwiedodatni = 0;
+prawdziwieujemny = 0;
+falszywiedodatni = 0;
+falszywieujemny = 0;
 for i=1:wt
     d=zeros(liczbaWierszySiatki,liczbaKolumnSiatki);
     for j=1:liczbaWierszySiatki
@@ -323,4 +318,6 @@ fprintf("\nSpecyficzność: " + specyficznosc + "\n");
 % sprawdzic czy na pewno dobrze aktualizujemy wagi i przeprowadzamy proces
 % uczenia
 
-% decyzja czy uzywamy filtru medianowego czy nie
+% decyzja czy uzywamy filtru medianowego czy nie?
+
+% ostatnie chyba pytanie, czy przechodzimy na wektoryzacje?
