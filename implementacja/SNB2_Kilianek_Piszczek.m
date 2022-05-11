@@ -130,7 +130,7 @@ for t = 1:iteracja
         end
     end
     
-    figure(2)
+    figure(1)
     title('Proces uczenia sieci (przebieg błędu w zależności od liczby iteracji)')
     hold on;
     xlabel('iteracja')
@@ -199,16 +199,19 @@ for t = 1:iteracja
         end
     end
 
-    figure(5)
-    imagesc(heatmapazlosliwa)
-    colorbar
-    title('heatmapa zlosliwa')
-    figure(6)
-    imagesc(heatmapalagodna)
-    colorbar
-    title('heatmapa lagodna')
+%     figure(2)
+%     imagesc(heatmapazlosliwa)
+%     colorbar
+%     title('heatmapa zlosliwa')
+%     figure(3)
+%     imagesc(heatmapalagodna)
+%     colorbar
+%     title('heatmapa lagodna')
 
     wynik = heatmapazlosliwa > heatmapalagodna;
+    figure(4)
+    imagesc(wynik)
+    title('Mapa zapalanych neuronów łagodna/złośliwa klasyfikacja')
     %wynik = medfilt2(wynik,'symmetric');
     
     % Test sieci SOM - poprawność na danych Treningowych (błąd uczenia)
@@ -239,13 +242,13 @@ for t = 1:iteracja
     end
 
     blad(t) = licznik/wt *100;
-    figure(2)
+    figure(1)
     hold on;
     plot(t,blad(t),'*b')
 
 end
 
-figure(2)
+figure(1)
 yline(mean(blad),'--k','wartość średnia');
 yline(min(blad),'--b','wartość minimalna');
 
