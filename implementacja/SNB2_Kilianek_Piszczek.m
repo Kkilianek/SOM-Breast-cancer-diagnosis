@@ -83,7 +83,7 @@ zbiorTreningowy = [Malignant(uint64(size(Malignant,1)/2)+1:size(Malignant,1),:) 
 liczbaWierszySiatki = 6;
 liczbaKolumnSiatki = 6;
 
-iteracja = 1000; % Odgórny limit iteracji potrzebny do zbieżności
+iteracja = 100; % Odgórny limit iteracji potrzebny do zbieżności
 
 %% =========== Ustawienie parametrów dla SOM =========
 % Początkowy topologiczny rozmiar sąsiedztwa zwycięskiego neuronu
@@ -207,11 +207,18 @@ wektorwynikow(t,:)=[iteracja,lp,lf];
 %% =========== Kalibracja sieci SOM v2 =========  
     kalibracja=[Malignant(1:uint64(size(Malignant,1)/2),1:5) ; Benign(1:uint64(size(Benign,1)/2),1:5)];
     wspolrzedne=[0 0 ; 0 0]; % inicjalizacja wektora przechowującego współrzędne wyznaczonych neuronów
+    figure(3)
+    hold on
     for i=1:2 % iteracja po wektorach kalibrujących
         d=zeros(liczbaWierszySiatki,liczbaKolumnSiatki); % macierz wartości roznicy miedzy kazdym neuronem i wektorem kalibrującym
         for j=1:liczbaWierszySiatki    % iteracja po neuronach-wiersze sieci
             for l=1:liczbaKolumnSiatki    % iteracja po neuronach-kolumny sieci
                 d(j,l)=norm(kalibracja(i)-reshape(mapaSOM(j,l,:),1,size(zbiorTreningowy(:,1:5),2)));
+                [M,I1]=min(d);
+                [M,I2]=min(M);
+                wspolrzedne(i,:)=[I1(I2),I2];
+                plot(wspolrzedne(1,1),wspolrzedne(1,2),'*b')
+                plot(wspolrzedne(2,1),wspolrzedne(2,2),'*r')
             end
         end
         [M,I1]=min(d);
@@ -249,10 +256,10 @@ wektorwynikow(t,:)=[iteracja,lp,lf];
     hold on;
     plot(t,blad(t),'*b') % wykreślenie błędu
     
-    if t~=iteracja
-        figure(1)
-        clf; % wyczysczenie wykresu ilustrujacego mape som po kazdej iteracji
-    end
+%     if t~=iteracja
+%         figure(1)
+%         clf; % wyczysczenie wykresu ilustrujacego mape som po kazdej iteracji
+%     end
 end
 figure(2)
 yline(mean(blad),'--k','wartość średnia');
