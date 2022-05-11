@@ -209,10 +209,11 @@ for t = 1:iteracja
 %     title('heatmapa lagodna')
 
     wynik = heatmapazlosliwa > heatmapalagodna;
+    wynik = medfilt2(wynik,'symmetric');
     figure(4)
     imagesc(wynik)
     title('Mapa zapalanych neuronów łagodna/złośliwa klasyfikacja')
-    %wynik = medfilt2(wynik,'symmetric');
+    
     
     % Test sieci SOM - poprawność na danych Treningowych (błąd uczenia)
     [wt,~]=size(zbiorTreningowy);
