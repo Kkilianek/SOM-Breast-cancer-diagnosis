@@ -86,7 +86,7 @@ iteracja = 100; % odgórny limit iteracji potrzebny do zbieżności
 
 %% =========== Ustawienie parametrów dla SOM =========
 
-poczatkowyRozmiarSasiedztwa = 2; % Początkowy topologiczny rozmiar sąsiedztwa zwycięskiego neuronu
+poczatkowyRozmiarSasiedztwa = 1; % Początkowy topologiczny rozmiar sąsiedztwa zwycięskiego neuronu
 
 % Stała czasowa początkowego rozmiaru sąsiedztwa topologicznego
 stalaCzasowa = iteracja/log(poczatkowyRozmiarSasiedztwa);
@@ -216,8 +216,9 @@ wektorwynikow(t,:)=[iteracja,lp,lf];
                 [M,I1]=min(d);
                 [M,I2]=min(M);
                 wspolrzedne(i,:)=[I1(I2),I2];
-                plot(wspolrzedne(1,1),wspolrzedne(1,2),'*b')
-                plot(wspolrzedne(2,1),wspolrzedne(2,2),'*r')
+                figure(3)
+                plot(wspolrzedne(1,1),wspolrzedne(1,2),'*r')
+                plot(wspolrzedne(2,1),wspolrzedne(2,2),'*b')
             end
         end
         [M,I1]=min(d);
@@ -238,23 +239,23 @@ wektorwynikow(t,:)=[iteracja,lp,lf];
         end
         [M,I1]=min(d);
         [M,I2]=min(M); % I2-nr. kolumny sieci; I1(I2)-nr.wiersza
-        if I1(I2)<=wspolrzedne(1,1) && I2<=wspolrzedne(1,2)
-            if zbiorTestowy(wt,6) == 0
-                licznik = licznik + 1;
-            end
-            liczbaZlosliwych=liczbaZlosliwych+1;
-        elseif I1(I2)>=wspolrzedne(2,1) && I2>=wspolrzedne(2,2)
+        if I1(I2)>=wspolrzedne(2,1) && I2>=wspolrzedne(2,2)
             liczbaLagodnych=liczbaLagodnych+1;
             if zbiorTestowy(wt,6) == 1
                 licznik = licznik + 1;
             end
+        else
+            if zbiorTestowy(wt,6) == 0
+                licznik = licznik + 1;
+            end
+            liczbaZlosliwych=liczbaZlosliwych+1;
         end
     end
     
     blad(t) = licznik/wt; % obliczenie stosunku liczby błednie zdiagnozowanych zmian do wszystkich testów
     figure(2)
     hold on;
-    plot(t,blad(t),'*b') % wykreślenie błędu
+    plot(t,blad(t)*100,'*b') % wykreślenie błędu
     
 %     if t~=iteracja
 %         figure(1)
@@ -276,3 +277,6 @@ fprintf("\nBłąd klasyfikacji po " + iteracja + " iteracjach wynosi: " + blad(i
 % tutaj trzeba okreslic czulosc/specyficznosc, jeszcze wypisac jakie byly
 % wspolczynniki lagodne/zlosliwe, ktore byly potrzebne do klasyfikacji (w
 % sensie jakie progi decyzyjne uzylismy)
+
+figure(3)
+legend('łagodne','złośliwe')
