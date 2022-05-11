@@ -247,6 +247,16 @@ figure(2)
 imagesc(wynik)
 title('Mapa zapalanych neuronów łagodna/złośliwa klasyfikacja')
 
+figure(3)
+imagesc(heatmapalagodna)
+colorbar
+title('Mapa zapalanych neuronów łagodna klasyfikacja')
+
+figure(4)
+imagesc(heatmapazlosliwa)
+colorbar
+title('Mapa zapalanych neuronów złośliwa klasyfikacja')
+
 %% =========== Wyniki procesu uczenia sieci SOM =========
 
 fprintf('\n\n==== Wyniki procesu uczenia sieci SOM ====');
