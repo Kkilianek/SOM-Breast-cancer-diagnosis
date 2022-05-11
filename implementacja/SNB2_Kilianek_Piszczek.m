@@ -74,7 +74,7 @@ Benign = M(benign,:); % zbiór cech dla przypadku nowotworu łagodnego
 zbiorTestowy = [Malignant(1:uint64(size(Malignant,1)/2),:) ; Benign(1:uint64(size(Benign,1)/2),:)]; % dane testowe
 zbiorTreningowy = [Malignant(uint64(size(Malignant,1)/2)+1:size(Malignant,1),:) ; Benign(uint64(size(Benign,1)/2)+1:size(Benign,1),:)]; % dane uczące
 
-%% ========= Implementacja sieci SOM =========
+%% =========== Ustawienie parametrów dla SOM =========
 
 % ustalanie rozmiarów sieci
 liczbaWierszySiatki = 6;
@@ -82,12 +82,9 @@ liczbaKolumnSiatki = 6;
 
 iteracja = 100; % odgórny limit iteracji potrzebny do zbieżności
 
-%% =========== Ustawienie parametrów dla SOM =========
-
 poczatkowyRozmiarSasiedztwa = 2; % Początkowy topologiczny rozmiar sąsiedztwa zwycięskiego neuronu
 
-% Stała czasowa początkowego rozmiaru sąsiedztwa topologicznego
-stalaCzasowa = iteracja/log(poczatkowyRozmiarSasiedztwa);
+stalaCzasowa = iteracja/log(poczatkowyRozmiarSasiedztwa); % Stała czasowa początkowego rozmiaru sąsiedztwa topologicznego
 
 poczatkowyWspolczynnikUczenia = 1; % Początkowa szybkość uczenia się zmienna w czasie
 
@@ -139,7 +136,7 @@ for t = 1:iteracja
     xlabel('iteracja')
     ylabel('błąd klasyfikacji [w %]')
 
-%% =========== Kalibracja sieci SOM =========  
+    % Kalibracja sieci SOM
     wspolrzedne=zeros(size(zbiorTreningowy,1),2); % inicjalizacja wektora przechowującego współrzędne wyznaczonych neuronów 
     d=zeros(liczbaWierszySiatki,liczbaKolumnSiatki); % macierz wartości roznicy miedzy kazdym neuronem i wektorem kalibrującym
     % 1-216 złośliwe
@@ -212,10 +209,9 @@ for t = 1:iteracja
     title('heatmapa lagodna')
 
     wynik = heatmapazlosliwa > heatmapalagodna;
-    wynik = medfilt2(wynik,'symmetric');
+    %wynik = medfilt2(wynik,'symmetric');
     
-%% =========== Test sieci SOM - poprawność na danych Treningowych (błąd uczenia) =========  
-
+    % Test sieci SOM - poprawność na danych Treningowych (błąd uczenia)
     [wt,~]=size(zbiorTreningowy);
     liczbaZlosliwych=0;
     liczbaLagodnych=0;
