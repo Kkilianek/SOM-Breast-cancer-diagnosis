@@ -12,5 +12,4 @@ function [obliczonyDystans, i] = najbizszyDystans(zbiorTreningowy, mapaSOM, licz
             obliczonyDystans(r,c) = sqrt(V*V');
         end
     end
-
 end
