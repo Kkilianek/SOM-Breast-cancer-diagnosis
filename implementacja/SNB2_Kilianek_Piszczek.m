@@ -80,7 +80,7 @@ zbiorTreningowy = [Malignant(uint64(size(Malignant,1)/2)+1:size(Malignant,1),:) 
 liczbaWierszySiatki = 6;
 liczbaKolumnSiatki = 6;
 
-iteracja = 10000; % odgórny limit iteracji potrzebny do zbieżności
+iteracja = 100; % odgórny limit iteracji potrzebny do zbieżności
 
 %% =========== Ustawienie parametrów dla SOM =========
 
@@ -212,6 +212,7 @@ for t = 1:iteracja
     title('heatmapa lagodna')
 
     wynik = heatmapazlosliwa > heatmapalagodna;
+    wynik = medfilt2(wynik,'symmetric');
     
 %% =========== Test sieci SOM - poprawność na danych Treningowych (błąd uczenia) =========  
 
