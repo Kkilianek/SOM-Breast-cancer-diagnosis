@@ -68,8 +68,8 @@ Benign = M(benign,:); % zbiór cech dla przypadku nowotworu łagodnego
 
 %zastąpienie brakujących wartości parametrem statystycznym
 for i=1:5
-    Malignant(any(ismissing(Malignant(:,i)),2),i)=median(Malignant(:,i),'omitnan');
-    Benign(any(ismissing(Benign(:,i)),2),i)=median(Benign(:,i),'omitnan');
+    Malignant(any(ismissing(Malignant(:,i)),2),i)=mean(Malignant(:,i),'omitnan');
+    Benign(any(ismissing(Benign(:,i)),2),i)=mean(Benign(:,i),'omitnan');
 end
 
 %% ========= Podział danych na zbiór uczący i zbior testowy =========
@@ -83,7 +83,7 @@ zbiorTreningowy = [Malignant(uint64(size(Malignant,1)/2)+1:size(Malignant,1),:) 
 liczbaWierszySiatki = 6;
 liczbaKolumnSiatki = 6;
 
-iteracja = 100; % odgórny limit iteracji potrzebny do zbieżności
+iteracja = 300; % odgórny limit iteracji potrzebny do zbieżności
 
 poczatkowyRozmiarSasiedztwa = 2; % Początkowy topologiczny rozmiar sąsiedztwa zwycięskiego neuronu
 
@@ -249,7 +249,7 @@ title('Mapa zapalanych neuronów łagodna/złośliwa klasyfikacja')
 
 %% =========== Wyniki procesu uczenia sieci SOM =========
 
-fprintf('==== Wyniki procesu uczenia sieci SOM ====');
+fprintf('\n\n==== Wyniki procesu uczenia sieci SOM ====');
 fprintf("\nLiczba zmian złośliwych w zbiorze treningowym: " + sum(zbiorTreningowy(:,6) == 1));
 fprintf("\nLiczba zmian łagodynch w zbiorze treningowym: " + sum(zbiorTreningowy(:,6) == 0));
 fprintf("\nLiczba sklasyfikowanych zmian złośliwych w ostatniej iteracji: " + liczbaZlosliwych);
@@ -298,7 +298,7 @@ bladtest = liczniktest/wt * 100;
 
 %% =========== Wyniki testu nauczenia sieci SOM =========
 
-fprintf('\n==== Wyniki testu nauczenia sieci SOM ====');
+fprintf('\n\n==== Wyniki testu nauczenia sieci SOM ====');
 fprintf("\nLiczba zmian złośliwych w zbiorze testującym: " + sum(zbiorTestowy(:,6) == 1));
 fprintf("\nLiczba zmian łagodynch w zbiorze testującym: " + sum(zbiorTestowy(:,6) == 0));
 fprintf("\nLiczba wszystkich wykrytych zmian złośliwych: " + liczbaZlosliwychtest);
@@ -309,7 +309,7 @@ fprintf("\nBłąd klasyfikacji ogółem w procentach: " + bladtest + "\n");
 
 czulosc = prawdziwiedodatni / (prawdziwiedodatni + falszywieujemny);
 specyficznosc = prawdziwieujemny / (prawdziwieujemny + falszywiedodatni);
-fprintf('\n==== Czułość i specyficzność sieci SOM ====');
+fprintf('\n\n==== Czułość i specyficzność sieci SOM ====');
 fprintf("\nCzułość: " + czulosc);
 fprintf("\nSpecyficzność: " + specyficznosc + "\n");
 
@@ -320,4 +320,4 @@ fprintf("\nSpecyficzność: " + specyficznosc + "\n");
 
 % decyzja czy uzywamy filtru medianowego czy nie?
 
-% ostatnie chyba pytanie, czy przechodzimy na wektoryzacje?
+% ostatnie chyba pytanie, czy przechodzimy na wektoryzacje zeby szybciej sie liczylo?
