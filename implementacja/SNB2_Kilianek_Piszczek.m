@@ -207,7 +207,7 @@ for t = 1:iteracja
 
     % obliczenie końcowych wyników (najczęściej zapalanych neuronów względem klasy złośliwej)
     wynik = heatmapazlosliwa > heatmapalagodna;
-%     wynik = medfilt2(wynik,'symmetric'); % <- tutaj musimy się zdecydować czy to robimy czy nie
+    wynik = medfilt2(wynik,'symmetric'); % <- tutaj musimy się zdecydować czy to robimy czy nie
     
     % Test sieci SOM - poprawność na danych Treningowych (błąd uczenia)
     [wt,~] = size(zbiorTreningowy);
