@@ -68,8 +68,8 @@ Benign = M(benign,:); % zbiór cech dla przypadku nowotworu łagodnego
 
 %zastąpienie brakujących wartości parametrem statystycznym
 for i=1:5
-    Malignant(any(ismissing(Malignant(:,i)),2),i)=mean(Malignant(:,i),'omitnan');
-    Benign(any(ismissing(Benign(:,i)),2),i)=mean(Benign(:,i),'omitnan');
+    Malignant(any(ismissing(Malignant(:,i)),2),i)=median(Malignant(:,i),'omitnan');
+    Benign(any(ismissing(Benign(:,i)),2),i)=median(Benign(:,i),'omitnan');
 end
 
 %% ========= Podział danych na zbiór uczący i zbior testowy =========
@@ -93,15 +93,20 @@ poczatkowyWspolczynnikUczenia = 1; % Początkowa szybkość uczenia się zmienna
 
 wspolczynnikNauki = iteracja; % Stała czasowa dla zmiennej w czasie szybkości uczenia się
 
-siatkaSOM = zeros(liczbaWierszySiatki,liczbaKolumnSiatki,5); % prealokacja
-
-    for i = 1:liczbaWierszySiatki
-        for j = 1:liczbaKolumnSiatki
-            siatkaSOM(i,j,:) = rand(1,5); % wylosowanie kolejno wektorów wag
-        end
-    end
+siatkaSOM = rand(liczbaWierszySiatki,liczbaKolumnSiatki,5); % wylosowanie kolejno wektorów wag
 
 blad = zeros(iteracja,1); % wektor przechowujący obliczony błąd w trakcie uczenia sieci
+
+%% =========== Przygotowanie wektora iteracji do testów =========
+iteracje = 50:50:500;
+liczbapowt=size(iteracje,2);
+s=1;
+ls=10;
+wyniki=zeros(liczbapowt*ls,4);
+for it=1:liczbapowt
+    iteracja=iteracje(it);
+    for sr=1:ls
+
 
 %% =========== Proces uczenia sieci SOM =========
 
@@ -201,7 +206,7 @@ for t = 1:iteracja
 
     % obliczenie końcowych wyników (najczęściej zapalanych neuronów względem klasy złośliwej)
     wynik = heatmapazlosliwa > heatmapalagodna;
-    wynik = medfilt2(wynik,'symmetric'); % <- tutaj musimy się zdecydować czy to robimy czy nie
+%     wynik = medfilt2(wynik,'symmetric'); % <- tutaj musimy się zdecydować czy to robimy czy nie
     
     % Test sieci SOM - poprawność na danych Treningowych (błąd uczenia)
     [wt,~] = size(zbiorTreningowy);
@@ -240,7 +245,7 @@ title('Proces uczenia sieci (przebieg błędu w zależności od liczby iteracji)
 hold on;
 xlabel('iteracja')
 ylabel('błąd klasyfikacji [w %]')
-plot(blad,'--*b')
+plot(blad,'*b')
 yline(min(blad),'-k','wartość minimalna');
 
 figure(2)
@@ -305,7 +310,7 @@ for i=1:wt
 end
 
 bladtest = liczniktest/wt * 100;
-
+ 
 %% =========== Wyniki testu nauczenia sieci SOM =========
 
 fprintf('\n\n==== Wyniki testu nauczenia sieci SOM ====');
@@ -319,10 +324,20 @@ fprintf("\nBłąd klasyfikacji ogółem w procentach: " + bladtest + "\n");
 
 czulosc = prawdziwiedodatni / (prawdziwiedodatni + falszywieujemny);
 specyficznosc = prawdziwieujemny / (prawdziwieujemny + falszywiedodatni);
+
+wyniki(s,:)=[iteracja,liczbaLagodnychtest,liczbaZlosliwychtest,bladtest,czulosc,specyficznosc];
+s=s+1;
+
 fprintf('\n\n==== Czułość i specyficzność sieci SOM ====');
 fprintf("\nCzułość: " + czulosc);
 fprintf("\nSpecyficzność: " + specyficznosc + "\n");
-
+   end
+end
+%% =========== Statystyka testów sieci SOM =========
+srwyniki=zeros(liczbapowt,6);
+for i=1:liczbapowt
+srwyniki(i,:)=[iteracje(i),mean(wyniki((i-1)*ls+1:i*ls,2)),mean(wyniki((i-1)*ls+1:i*ls,3)),mean(wyniki((i-1)*ls+1:i*ls,4)),mean(wyniki((i-1)*ls+1:i*ls,5)),mean(wyniki((i-1)*ls+1:i*ls,6))];
+end
 %% =========== TODO ===========
 
 % sprawdzic czy na pewno dobrze aktualizujemy wagi i przeprowadzamy proces
