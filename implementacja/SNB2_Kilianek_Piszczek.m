@@ -97,18 +97,6 @@ siatkaSOM = rand(liczbaWierszySiatki,liczbaKolumnSiatki,5); % wylosowanie kolejn
 
 blad = zeros(iteracja,1); % wektor przechowujący obliczony błąd w trakcie uczenia sieci
 
-%% =========== Przygotowanie wektora iteracji do testów - jeśli niepotrzebne, zakomentować sekcję i odpowiednie endy na końcu =========
-iteracje = 50:50:500;
-liczbapowt=size(iteracje,2);
-s=1;
-ls=10;
-wyniki=zeros(liczbapowt*ls,6);
-for it=1:liczbapowt
-    iteracja=iteracje(it);
-    blad = zeros(iteracja,1); % wektor przechowujący obliczony błąd w trakcie uczenia sieci
-    for sr=1:ls
-
-
 %% =========== Proces uczenia sieci SOM =========
 
 for t = 1:iteracja
@@ -207,7 +195,7 @@ for t = 1:iteracja
 
     % obliczenie końcowych wyników (najczęściej zapalanych neuronów względem klasy złośliwej)
     wynik = heatmapazlosliwa > heatmapalagodna;
-    wynik = medfilt2(wynik,'symmetric'); % <- tutaj musimy się zdecydować czy to robimy czy nie
+    wynik = medfilt2(wynik,'symmetric'); 
     
     % Test sieci SOM - poprawność na danych Treningowych (błąd uczenia)
     [wt,~] = size(zbiorTreningowy);
@@ -325,25 +313,6 @@ fprintf("\nBłąd klasyfikacji ogółem w procentach: " + bladtest + "\n");
 
 czulosc = prawdziwiedodatni / (prawdziwiedodatni + falszywieujemny);
 specyficznosc = prawdziwieujemny / (prawdziwieujemny + falszywiedodatni);
-
-wyniki(s,:)=[iteracja,liczbaLagodnychtest,liczbaZlosliwychtest,bladtest,czulosc,specyficznosc];
-s=s+1;
-
 fprintf('\n\n==== Czułość i specyficzność sieci SOM ====');
 fprintf("\nCzułość: " + czulosc);
 fprintf("\nSpecyficzność: " + specyficznosc + "\n");
-   end
-end
-%% =========== Statystyka testów sieci SOM =========
-srwyniki=zeros(liczbapowt,6);
-for i=1:liczbapowt
-srwyniki(i,:)=[iteracje(i),mean(wyniki((i-1)*ls+1:i*ls,2)),mean(wyniki((i-1)*ls+1:i*ls,3)),mean(wyniki((i-1)*ls+1:i*ls,4)),mean(wyniki((i-1)*ls+1:i*ls,5)),mean(wyniki((i-1)*ls+1:i*ls,6))];
-end
-%% =========== TODO ===========
-
-% sprawdzic czy na pewno dobrze aktualizujemy wagi i przeprowadzamy proces
-% uczenia
-
-% decyzja czy uzywamy filtru medianowego czy nie?
-
-% ostatnie chyba pytanie, czy przechodzimy na wektoryzacje zeby szybciej sie liczylo?
