@@ -95,7 +95,9 @@ wspolczynnikNauki = iteracja; % Stała czasowa dla zmiennej w czasie szybkości 
 
 siatkaSOM = rand(liczbaWierszySiatki,liczbaKolumnSiatki,5); % wylosowanie kolejno wektorów wag
 
-%% =========== Przygotowanie wektora iteracji do testów =========
+blad = zeros(iteracja,1); % wektor przechowujący obliczony błąd w trakcie uczenia sieci
+
+%% =========== Przygotowanie wektora iteracji do testów - jeśli niepotrzebne, zakomentować sekcję i odpowiednie endy na końcu =========
 iteracje = 50:50:500;
 liczbapowt=size(iteracje,2);
 s=1;
