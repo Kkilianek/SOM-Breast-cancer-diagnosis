@@ -77,7 +77,7 @@ end
 zbiorTestowy = [Malignant(1:uint64(size(Malignant,1)/2),:) ; Benign(1:uint64(size(Benign,1)/2),:)]; % dane testowe
 zbiorTreningowy = [Malignant(uint64(size(Malignant,1)/2)+1:size(Malignant,1),:) ; Benign(uint64(size(Benign,1)/2)+1:size(Benign,1),:)]; % dane uczące
 
-%% =========== Ustawienie parametrów dla SOM =========
+%% =========== Ustawienie parametrów dla SOM ===========
 
 % ustalanie rozmiarów sieci
 liczbaWierszySiatki = 6;
@@ -97,19 +97,20 @@ siatkaSOM = rand(liczbaWierszySiatki,liczbaKolumnSiatki,5); % wylosowanie kolejn
 
 blad = zeros(iteracja,1); % wektor przechowujący obliczony błąd w trakcie uczenia sieci
 
-%% =========== Przygotowanie wektora iteracji do testów - jeśli niepotrzebne, zakomentować sekcję i odpowiednie endy na końcu =========
+%% =========== Przygotowanie wektora iteracji do testów ===========
 iteracje = 50:50:500;
 liczbapowt=size(iteracje,2);
 s=1;
-ls=10;
+ls=2;
 wyniki=zeros(liczbapowt*ls,6);
+
 for it=1:liczbapowt
     iteracja=iteracje(it);
     blad = zeros(iteracja,1); % wektor przechowujący obliczony błąd w trakcie uczenia sieci
     for sr=1:ls
 
         
-        %% =========== Proces uczenia sieci SOM =========
+        %% =========== Proces uczenia sieci SOM ===========
         
         for t = 1:iteracja
             szerokosc = poczatkowyRozmiarSasiedztwa*exp(-t/stalaCzasowa);
@@ -207,7 +208,7 @@ for it=1:liczbapowt
         
             % obliczenie końcowych wyników (najczęściej zapalanych neuronów względem klasy złośliwej)
             wynik = heatmapazlosliwa > heatmapalagodna;
-            wynik = medfilt2(wynik,'symmetric'); % <- tutaj musimy się zdecydować czy to robimy czy nie
+            wynik = medfilt2(wynik,'symmetric');
             
             % Test sieci SOM - poprawność na danych Treningowych (błąd uczenia)
             [wt,~] = size(zbiorTreningowy);
@@ -237,7 +238,7 @@ for it=1:liczbapowt
                 end
             end
         
-            blad(t) = licznik/wt *100; % obliczenie błedu 
+            blad(t) = licznik/wt *100; % obliczenie błędu 
             fprintf("Iteracja: " + t + "\n");
         end
         
@@ -312,7 +313,7 @@ for it=1:liczbapowt
         
         bladtest = liczniktest/wt * 100;
          
-        %% =========== Wyniki testu nauczenia sieci SOM =========
+        %% =========== Wyniki testu nauczenia sieci SOM ===========
         
         fprintf('\n\n==== Wyniki testu nauczenia sieci SOM ====');
         fprintf("\nLiczba zmian złośliwych w zbiorze testującym: " + sum(zbiorTestowy(:,6) == 1));
@@ -321,20 +322,20 @@ for it=1:liczbapowt
         fprintf("\nLiczba wszystkich wykrytych zmian łagodnych: " + liczbaLagodnychtest);
         fprintf("\nBłąd klasyfikacji ogółem w procentach: " + bladtest + "\n");
         
-        %% =========== Czułość i specyficzność sieci SOM =========
+        %% =========== Czułość i specyficzność sieci SOM ===========
         
         czulosc = prawdziwiedodatni / (prawdziwiedodatni + falszywieujemny);
         specyficznosc = prawdziwieujemny / (prawdziwieujemny + falszywiedodatni);
         
         wyniki(s,:)=[iteracja,liczbaLagodnychtest,liczbaZlosliwychtest,bladtest,czulosc,specyficznosc];
-        s=s+1;
+        s = s+1;
         
         fprintf('\n\n==== Czułość i specyficzność sieci SOM ====');
         fprintf("\nCzułość: " + czulosc);
         fprintf("\nSpecyficzność: " + specyficznosc + "\n");
-   end
+    end
 end
-%% =========== Statystyka testów sieci SOM =========
+%% =========== Statystyka testów sieci SOM ===========
 srwyniki=zeros(liczbapowt,6);
 for i=1:liczbapowt
     srwyniki(i,:)=[iteracje(i),mean(wyniki((i-1)*ls+1:i*ls,2)),mean(wyniki((i-1)*ls+1:i*ls,3)),mean(wyniki((i-1)*ls+1:i*ls,4)),mean(wyniki((i-1)*ls+1:i*ls,5)),mean(wyniki((i-1)*ls+1:i*ls,6))];
