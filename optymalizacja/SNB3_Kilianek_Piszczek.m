@@ -294,7 +294,7 @@ for i=1:wt
     if wynik(I1,I2) == 1 
         liczbaZlosliwychtest = liczbaZlosliwychtest + 1;
         if zbiorTestowy(i,6) == 0
-            prawdziwieujemny = prawdziwieujemny + 1;
+            falszywiedodatni = falszywiedodatni + 1;
             liczniktest = liczniktest + 1;
         else
             prawdziwiedodatni = prawdziwiedodatni + 1;
@@ -305,7 +305,7 @@ for i=1:wt
             liczniktest = liczniktest + 1;
             falszywieujemny = falszywieujemny + 1;
         else
-            falszywiedodatni = falszywiedodatni + 1;
+            prawdziwieujemny = prawdziwieujemny + 1;
         end
     end
 end
