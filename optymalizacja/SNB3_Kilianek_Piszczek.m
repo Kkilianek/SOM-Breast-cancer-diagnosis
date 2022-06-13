@@ -73,7 +73,7 @@ Benign = M(benign,:); % zbiór cech dla przypadku nowotworu łagodnego
 
 %% ========= Preprocessing danych (etap 4 - uzupełnienie niekompletnych danych) =========
 
-%zastąpienie brakujących wartości parametrem statystycznym
+% zastąpienie brakujących wartości parametrem statystycznym
 for i=1:5
     Malignant(any(ismissing(Malignant(:,i)),2),i)=median(Malignant(:,i),'omitnan');
     Benign(any(ismissing(Benign(:,i)),2),i)=median(Benign(:,i),'omitnan');
@@ -91,7 +91,7 @@ permBenign = randperm(size(Benign,1));
 % zbiorTestowy = [Malignant(permMalignant(1:round(size(permMalignant,2)/2)),:);Benign(permBenign(1:round(size(permBenign,2)/2)),:)];
 % zbiorTreningowy = [Malignant(permMalignant((round(size(permMalignant,2)/2))+1):size(permMalignant,2),:);Benign(permBenign((round(size(permBenign,2)/2))+1):size(permBenign,2),:)];
 
-%save('dataset.mat','zbiorTestowy','zbiorTreningowy')
+% save('dataset.mat','zbiorTestowy','zbiorTreningowy')
 load('dataset.mat','zbiorTestowy','zbiorTreningowy')
 
 %% =========== Ustawienie parametrów dla SOM ===========
@@ -365,3 +365,6 @@ srwyniki = zeros(liczbapowt,6);
 for i=1:liczbapowt
     srwyniki(i,:)=[iteracje(i),mean(wyniki((i-1)*ls+1:i*ls,2)),mean(wyniki((i-1)*ls+1:i*ls,3)),mean(wyniki((i-1)*ls+1:i*ls,4)),mean(wyniki((i-1)*ls+1:i*ls,5)),mean(wyniki((i-1)*ls+1:i*ls,6))];
 end
+
+format short
+disp(srwyniki)
