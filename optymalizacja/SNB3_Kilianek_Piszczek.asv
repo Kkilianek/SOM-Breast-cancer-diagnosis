@@ -91,17 +91,20 @@ permBenign = randperm(size(Benign,1));
 zbiorTestowy = [Malignant(permMalignant(1:round(size(permMalignant,2)/2)),:);Benign(permBenign(1:round(size(permBenign,2)/2)),:)];
 zbiorTreningowy = [Malignant(permMalignant((round(size(permMalignant,2)/2))+1):size(permMalignant,2),:);Benign(permBenign((round(size(permBenign,2)/2))+1):size(permBenign,2),:)];
 
+%save('dataset.mat','zbiorTestowy','zbiorTreningowy')
+load()
+
 %% =========== Ustawienie parametrów dla SOM ===========
 
 % ustalanie rozmiarów sieci
-liczbaWierszySiatki = 5;
-liczbaKolumnSiatki = 5;
+liczbaWierszySiatki = 8;
+liczbaKolumnSiatki = 8;
 
 poczatkowyWspolczynnikUczenia = 1; % Początkowa szybkość uczenia się zmienna w czasie
 
-iteracja = 300; % odgórny limit iteracji potrzebny do zbieżności
-
 poczatkowyRozmiarSasiedztwa = 2; % Początkowy topologiczny rozmiar sąsiedztwa zwycięskiego neuronu
+
+iteracja = 300;
 
 stalaCzasowa = iteracja/log(poczatkowyRozmiarSasiedztwa); % Stała czasowa początkowego rozmiaru sąsiedztwa topologicznego
 
@@ -112,7 +115,7 @@ siatkaSOM = rand(liczbaWierszySiatki,liczbaKolumnSiatki,5); % wylosowanie kolejn
 blad = zeros(iteracja,1); % wektor przechowujący obliczony błąd w trakcie uczenia sieci
 
 %% =========== Przygotowanie wektora iteracji do testów ===========
-iteracje = 700;
+iteracje = 300;
 liczbapowt = size(iteracje,2);
 s = 1;
 ls = 10;
@@ -121,9 +124,8 @@ wyniki = zeros(liczbapowt*ls,6);
 for it = 1:liczbapowt
     iteracja = iteracje(it);
     blad = zeros(iteracja,1); % wektor przechowujący obliczony błąd w trakcie uczenia sieci
-    for sr = 1:ls
-
-        
+    for sr = 1:ls 
+        fprintf("próba " + sr + "/10");
         %% =========== Proces uczenia sieci SOM ===========
         
         for t = 1:iteracja
@@ -265,11 +267,6 @@ for it = 1:liczbapowt
         ylabel('błąd klasyfikacji [%]')
         plot(blad,'*b')
         yline(min(blad),'-k','wartość minimalna');
-
-        path = "./wykresy"  + ...
-            "/test_optymalizacji" + "powt" + it + "Rozmiar" + liczbaKolumnSiatki*liczbaWierszySiatki ...
-            + "Wsp" + poczatkowyWspolczynnikUczenia + ".png";
-        saveas(gcf,path);
         
 %         figure(2)
 %         imagesc(wynik)
@@ -354,11 +351,17 @@ for it = 1:liczbapowt
         fprintf('==== Czułość i specyficzność sieci SOM ====');
         fprintf("\nCzułość: " + czulosc);
         fprintf("\nSpecyficzność: " + specyficznosc + "\n\n\n\n\n\n");
+        if sr == ls
+            path = "./wykresy"  + ...
+            "/test_optymalizacji" + "Rozmiar" + liczbaKolumnSiatki*liczbaWierszySiatki ...
+            + "Wsp" + poczatkowyWspolczynnikUczenia + ".png";
+            saveas(gcf,path);
+        end
         close all;
     end
 end
 %% =========== Statystyka testów sieci SOM ===========
-srwyniki=zeros(liczbapowt,6);
+srwyniki = zeros(liczbapowt,6);
 for i=1:liczbapowt
     srwyniki(i,:)=[iteracje(i),mean(wyniki((i-1)*ls+1:i*ls,2)),mean(wyniki((i-1)*ls+1:i*ls,3)),mean(wyniki((i-1)*ls+1:i*ls,4)),mean(wyniki((i-1)*ls+1:i*ls,5)),mean(wyniki((i-1)*ls+1:i*ls,6))];
 end

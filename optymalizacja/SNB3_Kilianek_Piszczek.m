@@ -88,8 +88,11 @@ permBenign = randperm(size(Benign,1));
 
 % odpowiednio podział na dwa zbiory testowe i treningowe, mniej więcej 
 % pół na pół przypadków łagodnych i złośliwych
-zbiorTestowy = [Malignant(permMalignant(1:round(size(permMalignant,2)/2)),:);Benign(permBenign(1:round(size(permBenign,2)/2)),:)];
-zbiorTreningowy = [Malignant(permMalignant((round(size(permMalignant,2)/2))+1):size(permMalignant,2),:);Benign(permBenign((round(size(permBenign,2)/2))+1):size(permBenign,2),:)];
+% zbiorTestowy = [Malignant(permMalignant(1:round(size(permMalignant,2)/2)),:);Benign(permBenign(1:round(size(permBenign,2)/2)),:)];
+% zbiorTreningowy = [Malignant(permMalignant((round(size(permMalignant,2)/2))+1):size(permMalignant,2),:);Benign(permBenign((round(size(permBenign,2)/2))+1):size(permBenign,2),:)];
+
+%save('dataset.mat','zbiorTestowy','zbiorTreningowy')
+load('dataset.mat','zbiorTestowy','zbiorTreningowy')
 
 %% =========== Ustawienie parametrów dla SOM ===========
 
@@ -121,7 +124,8 @@ wyniki = zeros(liczbapowt*ls,6);
 for it = 1:liczbapowt
     iteracja = iteracje(it);
     blad = zeros(iteracja,1); % wektor przechowujący obliczony błąd w trakcie uczenia sieci
-    for sr = 1:ls    
+    for sr = 1:ls 
+        fprintf("próba " + sr + "/10\n");
         %% =========== Proces uczenia sieci SOM ===========
         
         for t = 1:iteracja
