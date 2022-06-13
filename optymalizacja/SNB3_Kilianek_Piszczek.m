@@ -165,6 +165,7 @@ for it = 1:liczbapowt
             end
         
             % Kalibracja sieci SOM
+            
             wspolrzedne=zeros(size(zbiorTreningowy,1),2); % inicjalizacja wektora przechowującego współrzędne wyznaczonych neuronów 
             d=zeros(liczbaWierszySiatki,liczbaKolumnSiatki); % macierz wartości roznicy miedzy kazdym neuronem i wektorem kalibrującym
 
