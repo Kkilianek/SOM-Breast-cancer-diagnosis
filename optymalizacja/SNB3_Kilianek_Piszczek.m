@@ -94,6 +94,11 @@ permBenign = randperm(size(Benign,1));
 % save('dataset.mat','zbiorTestowy','zbiorTreningowy')
 load('dataset.mat','zbiorTestowy','zbiorTreningowy')
 
+%Sortowanie zbioru treningowego - pomoc przy klasyfikacji
+zbiorTreningowy = sortrows(zbiorTreningowy,6,'descend');
+
+%zliczanie ile złośliwych
+ilez=sum(zbiorTreningowy(:,6)==1);
 %% =========== Ustawienie parametrów dla SOM ===========
 
 % ustalanie rozmiarów sieci
@@ -162,7 +167,8 @@ for it = 1:liczbapowt
             % Kalibracja sieci SOM
             wspolrzedne=zeros(size(zbiorTreningowy,1),2); % inicjalizacja wektora przechowującego współrzędne wyznaczonych neuronów 
             d=zeros(liczbaWierszySiatki,liczbaKolumnSiatki); % macierz wartości roznicy miedzy kazdym neuronem i wektorem kalibrującym
-        
+
+            
             for i=1:size(zbiorTreningowy,1)
                 for j=1:liczbaWierszySiatki
                     for l=1:liczbaKolumnSiatki
@@ -175,12 +181,12 @@ for it = 1:liczbapowt
             end
         
             % ustalenie najczęściej zapalanych neuronów
-            wspolrzednezlosliwe=unique(wspolrzedne(1:216,:),'rows');
-            wspolrzednelagodne=unique(wspolrzedne(217:end,:),'rows');
+            wspolrzednezlosliwe=unique(wspolrzedne(1:ilez,:),'rows');
+            wspolrzednelagodne=unique(wspolrzedne(ilez+1:end,:),'rows');
             iloscz=zeros(size(wspolrzednezlosliwe,1),1);
             iloscl=zeros(size(wspolrzednelagodne,1),1);
         
-            for i=1:216
+            for i=1:ilez
                 for j=1:size(wspolrzednezlosliwe)
                     if wspolrzedne(i,1)==wspolrzednezlosliwe(j,1) && wspolrzedne(i,2)==wspolrzednezlosliwe(j,2)
                         iloscz(j)=iloscz(j)+1;
@@ -188,7 +194,7 @@ for it = 1:liczbapowt
                 end
             end
         
-            for i=217:size(wspolrzedne,1)
+            for i=ilez:size(wspolrzedne,1)
                 for j=1:size(wspolrzednelagodne)
                     if wspolrzedne(i,1)==wspolrzednelagodne(j,1) && wspolrzedne(i,2)==wspolrzednelagodne(j,2)
                         iloscl(j)=iloscl(j)+1;
