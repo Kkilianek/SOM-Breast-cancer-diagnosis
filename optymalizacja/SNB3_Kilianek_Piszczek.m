@@ -8,6 +8,7 @@ clear;
 clc;
 close all;
 rng(303803)
+format short
 
 %% ========= Wczytanie danych =========
 
@@ -80,31 +81,29 @@ end
 
 %% ========= Podział danych na zbiór uczący i zbior testowy =========
 
-% wykorzystanie funkcji do generacji losowej permutacji liczb ilości
-% wierszy danych
-permMalignant = randperm(size(Malignant,1));
-permBenign = randperm(size(Benign,1));
+% wykorzystanie funkcji do generacji losowej permutacji liczb z przedzialu 
+% odpowiadajacego ilości wierszy danych
+% permMalignant = randperm(size(Malignant,1));
+% permBenign = randperm(size(Benign,1));
 
-% odpowiednio podział na dwa zbiory testowe i treningowe, mniej więcej 
-% pół na pół przypadków łagodnych i złośliwych
+% odpowiednio podział na dwa zbiory testowe i treningowe (przy mniej więcej 
+% pół na pół ilości przypadków łagodnych i złośliwych)
 % zbiorTestowy = [Malignant(permMalignant(1:round(size(permMalignant,2)/2)),:);Benign(permBenign(1:round(size(permBenign,2)/2)),:)];
 % zbiorTreningowy = [Malignant(permMalignant((round(size(permMalignant,2)/2))+1):size(permMalignant,2),:);Benign(permBenign(round(size(permBenign,2)/2)+1:size(permBenign,2)),:)];
-
-
 
 % save('dataset.mat','zbiorTestowy','zbiorTreningowy')
 load('dataset.mat','zbiorTestowy','zbiorTreningowy')
 
-%Sortowanie zbioru treningowego - pomoc przy klasyfikacji
+% Sortowanie zbioru treningowego - pomoc przy klasyfikacji
 zbiorTreningowy = sortrows(zbiorTreningowy,6,'descend');
 
-%zliczanie ile złośliwych
-ilez=sum(zbiorTreningowy(:,6)==1);
+% zliczanie ile złośliwych
+ilez = sum(zbiorTreningowy(:,6)==1);
 %% =========== Ustawienie parametrów dla SOM ===========
 
 % ustalanie rozmiarów sieci
-liczbaWierszySiatki = 8;
-liczbaKolumnSiatki = 8;
+liczbaWierszySiatki = 4;
+liczbaKolumnSiatki = 4;
 
 poczatkowyWspolczynnikUczenia = 1; % Początkowa szybkość uczenia się zmienna w czasie
 
@@ -127,16 +126,13 @@ for it = 1:liczbapowt
 
     blad = zeros(iteracja,1); % wektor przechowujący obliczony błąd w trakcie uczenia sieci
     for sr = 1:ls 
-        fprintf("próba " + sr + "/10\n");
+        fprintf("próba " + sr + "/" + ls + "\n");
         %% =========== Proces uczenia sieci SOM ===========
         
         for t = 1:iteracja
             szerokosc = poczatkowyRozmiarSasiedztwa*exp(-t/stalaCzasowa);
             wariancjaSzerokosci = szerokosc^2;
             wskaznikNauki = poczatkowyWspolczynnikUczenia*exp(-t/wspolczynnikNauki);
-%             if wskaznikNauki < 0.01 
-%                     wskaznikNauki = 0.1; % jeśli współczynnik jest bardzo mały ustaw stałą aprobowalną wartość
-%             end
         
             [obliczonyDystans, indeks] = najbizszyDystans(zbiorTreningowy(:,1:5), siatkaSOM, liczbaWierszySiatki, ...
                                                     liczbaKolumnSiatki,size(zbiorTreningowy(:,1:5),1), size(zbiorTreningowy(:,1:5),2));
@@ -274,20 +270,6 @@ for it = 1:liczbapowt
         plot(skalax,blad2,'*b')
         yline(min(blad2),'-k','wartość minimalna');
         
-%         figure(2)
-%         imagesc(wynik)
-%         title('Mapa zapalanych neuronów łagodna/złośliwa klasyfikacja')
-%         
-%         figure(3)
-%         imagesc(heatmapalagodna)
-%         colorbar
-%         title('Mapa zapalanych neuronów łagodna klasyfikacja')
-%         
-%         figure(4)
-%         imagesc(heatmapazlosliwa)
-%         colorbar
-%         title('Mapa zapalanych neuronów złośliwa klasyfikacja')
-        
         %% =========== Wyniki procesu uczenia sieci SOM =========
         
         fprintf('==== Wyniki procesu uczenia sieci SOM ====');
@@ -366,11 +348,11 @@ for it = 1:liczbapowt
         close all;
     end
 end
+
 %% =========== Statystyka testów sieci SOM ===========
 srwyniki = zeros(liczbapowt,3);
 for i=1:liczbapowt
     srwyniki(i,:)=[iteracje(i),mean(wyniki((i-1)*ls+1:i*ls,2)),mean(wyniki((i-1)*ls+1:i*ls,3))];
 end
 
-format short
 disp(srwyniki(:,2:3))
